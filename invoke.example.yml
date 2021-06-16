@@ -1,0 +1,11 @@
+---
+nautobot_chatops_extension_grafana:
+  project_name: "nautobot-chatops-extension-grafana"
+  nautobot_ver: "1.0.2"
+  local: false
+  python_ver: "3.6"
+  compose_dir: "development"
+  compose_files:
+    - "docker-compose.requirements.yml"
+    - "docker-compose.base.yml"
+    - "docker-compose.dev.yml"
