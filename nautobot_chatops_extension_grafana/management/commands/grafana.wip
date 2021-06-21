@@ -1,0 +1,25 @@
+from django.core.management.base import BaseCommand
+from django.db import connections
+import pydantic
+from django.db.utils import OperationalError
+import netbox_nautobot_grafana.grafana
+
+# from netbox_nautobot_nornir.worker import _setup_nornir
+# from netbox_nornir_plugins.inventory.netbox_orm import NetBoxORMInventory
+
+
+class Command(BaseCommand):
+    def say_hi(self):
+        print("Hi!")
+
+    def handle(self, *args, **kwargs):
+        print("Hello World")
+        if kwargs["nick"]:
+            self.say_hi()
+        # filters = { 'name': 'er01.nyc01' }
+        # print("get bgp hello world")
+        # _setup_nornir(filters)
+        # nickinv = NetBoxORMInventory(credentials_class="netbox_nornir_plugins.credentials.env_vars.CredentialsEnvVars", filters=filters, params={"use_fqdn": "True", "fqdn": "riotdirect.net"})
+
+    def add_arguments(self, parser):
+        parser.add_argument("--nick", action="store_true", help="Say Hi!")

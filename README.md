@@ -122,7 +122,9 @@ invoke start
 
 Nautobot server can now be accessed at [http://localhost:8080](http://localhost:8080).
 Plugin Documentation can now be accessed at [http://localhost:8001](http://localhost:8001).
-Mattermost server can now be accessed at [http://localhost:8002](http://localhost:8002).
+Mattermost server can now be accessed at [http://localhost:8002](http://localhost:8002) with the username `admin` and the password `password`.
+Grafana can now be accessed at [http://localhost:3000](http://localhost:3000) with the username `admin` no password.
+Prometheus can now be accessed at [http://localhost:9090](http://localhost:9090).
 
 ### CLI Helper Commands
 

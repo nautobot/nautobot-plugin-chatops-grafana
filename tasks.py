@@ -83,7 +83,10 @@ def docker_compose(context, command, **kwargs):
         command (str): Command string to append to the "docker-compose ..." command, such as "build", "up", etc.
         **kwargs: Passed through to the context.run() call.
     """
-    build_env = {"NAUTOBOT_VER": context.nautobot_chatops_extension_grafana.nautobot_ver, "PYTHON_VER": context.nautobot_chatops_extension_grafana.python_ver}
+    build_env = {
+        "NAUTOBOT_VER": context.nautobot_chatops_extension_grafana.nautobot_ver,
+        "PYTHON_VER": context.nautobot_chatops_extension_grafana.python_ver,
+    }
     compose_command = f'docker-compose --project-name {context.nautobot_chatops_extension_grafana.project_name} --project-directory "{context.nautobot_chatops_extension_grafana.compose_dir}"'
     for compose_file in context.nautobot_chatops_extension_grafana.compose_files:
         compose_file_path = os.path.join(context.nautobot_chatops_extension_grafana.compose_dir, compose_file)
@@ -270,10 +273,10 @@ def db_import(context):
 
     # Copy DBs
     # nautobot_chatops_extension_grafana_postgres_1
-    nautobot_copy_command = f'docker cp {context.nautobot_chatops_extension_grafana.compose_dir}/nautobot_backup.dump {context.nautobot_chatops_extension_grafana.project_name}_postgres_1:/tmp/nautobot_backup.dump'
+    nautobot_copy_command = f"docker cp {context.nautobot_chatops_extension_grafana.compose_dir}/nautobot_backup.dump {context.nautobot_chatops_extension_grafana.project_name}_postgres_1:/tmp/nautobot_backup.dump"
     context.run(nautobot_copy_command)
     # nautobot_chatops_extension_grafana_mattermost_db_1
-    mattermost_copy_command = f'docker cp {context.nautobot_chatops_extension_grafana.compose_dir}/mattermost_backup.dump {context.nautobot_chatops_extension_grafana.project_name}_mattermost_db_1:/tmp/mattermost_backup.dump'
+    mattermost_copy_command = f"docker cp {context.nautobot_chatops_extension_grafana.compose_dir}/mattermost_backup.dump {context.nautobot_chatops_extension_grafana.project_name}_mattermost_db_1:/tmp/mattermost_backup.dump"
     context.run(mattermost_copy_command)
 
     # Restore DBs
@@ -312,10 +315,10 @@ def db_export(context):
 
     # Copy DBs locally
     # nautobot_chatops_extension_grafana_postgres_1
-    nautobot_copy_command = f'docker cp {context.nautobot_chatops_extension_grafana.project_name}_postgres_1:/tmp/nautobot_backup.dump {context.nautobot_chatops_extension_grafana.compose_dir}/nautobot_backup.dump'
+    nautobot_copy_command = f"docker cp {context.nautobot_chatops_extension_grafana.project_name}_postgres_1:/tmp/nautobot_backup.dump {context.nautobot_chatops_extension_grafana.compose_dir}/nautobot_backup.dump"
     context.run(nautobot_copy_command)
     # nautobot_chatops_extension_grafana_mattermost_db_1
-    mattermost_copy_command = f'docker cp {context.nautobot_chatops_extension_grafana.project_name}_mattermost_db_1:/tmp/mattermost_backup.dump {context.nautobot_chatops_extension_grafana.compose_dir}/mattermost_backup.dump'
+    mattermost_copy_command = f"docker cp {context.nautobot_chatops_extension_grafana.project_name}_mattermost_db_1:/tmp/mattermost_backup.dump {context.nautobot_chatops_extension_grafana.compose_dir}/mattermost_backup.dump"
     context.run(mattermost_copy_command)
 
 

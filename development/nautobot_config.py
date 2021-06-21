@@ -232,13 +232,13 @@ PLUGINS = ["nautobot_capacity_metrics", "nautobot_chatops", "nautobot_chatops_ex
 # Plugins configuration settings. These settings are used by various plugins that the user may have installed.
 # Each key in the dictionary is the name of an installed plugin and its value is a dictionary of settings.
 PLUGINS_CONFIG = {
-    'nautobot_chatops': {
-        'enable_slack': is_truthy(os.environ.get("NAUTOBOT_CHATOPS_ENABLE_SLACK", False)),
-        'slack_api_token': os.environ.get("NAUTOBOT_CHATOPS_SLACK_API_TOKEN", ""),
-        'slack_signing_secret': os.environ.get("NAUTOBOT_CHATOPS_SIGNING_SECRET", ""),
-        'enable_mattermost': is_truthy(os.environ.get("NAUTOBOT_CHATOPS_ENABLE_MATTERMOST", False)),
-        'mattermost_api_token': os.environ.get("NAUTOBOT_CHATOPS_MATTERMOST_API_TOKEN", ""),
-        'mattermost_url': os.environ.get("NAUTOBOT_CHATOPS_MATTERMOST_URL", ""),
+    "nautobot_chatops": {
+        "enable_slack": is_truthy(os.environ.get("NAUTOBOT_CHATOPS_ENABLE_SLACK", False)),
+        "slack_api_token": os.environ.get("NAUTOBOT_CHATOPS_SLACK_API_TOKEN", ""),
+        "slack_signing_secret": os.environ.get("NAUTOBOT_CHATOPS_SIGNING_SECRET", ""),
+        "enable_mattermost": is_truthy(os.environ.get("NAUTOBOT_CHATOPS_ENABLE_MATTERMOST", False)),
+        "mattermost_api_token": os.environ.get("NAUTOBOT_CHATOPS_MATTERMOST_API_TOKEN", ""),
+        "mattermost_url": os.environ.get("NAUTOBOT_CHATOPS_MATTERMOST_URL", ""),
     },
     "nautobot_chatops_extension_grafana": {
         "grafana_url": os.environ.get("GRAFANA_URL", ""),

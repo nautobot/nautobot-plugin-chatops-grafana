@@ -9,3 +9,4 @@ nautobot_chatops_extension_grafana:
     - "docker-compose.requirements.yml"
     - "docker-compose.base.yml"
     - "docker-compose.dev.yml"
+    - "docker-compose.mattermost.yml"
