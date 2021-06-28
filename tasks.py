@@ -14,6 +14,7 @@ limitations under the License.
 
 from distutils.util import strtobool
 from invoke import Collection, task as invoke_task
+import time
 import os
 
 
@@ -48,6 +49,7 @@ namespace.configure(
                 "docker-compose.base.yml",
                 "docker-compose.dev.yml",
                 "docker-compose.docs.yml",
+                "docker-compose.mattermost.yml",
             ],
         }
     }
@@ -81,7 +83,10 @@ def docker_compose(context, command, **kwargs):
         command (str): Command string to append to the "docker-compose ..." command, such as "build", "up", etc.
         **kwargs: Passed through to the context.run() call.
     """
-    build_env = {"NAUTOBOT_VER": context.nautobot_chatops_extension_grafana.nautobot_ver, "PYTHON_VER": context.nautobot_chatops_extension_grafana.python_ver}
+    build_env = {
+        "NAUTOBOT_VER": context.nautobot_chatops_extension_grafana.nautobot_ver,
+        "PYTHON_VER": context.nautobot_chatops_extension_grafana.python_ver,
+    }
     compose_command = f'docker-compose --project-name {context.nautobot_chatops_extension_grafana.project_name} --project-directory "{context.nautobot_chatops_extension_grafana.compose_dir}"'
     for compose_file in context.nautobot_chatops_extension_grafana.compose_files:
         compose_file_path = os.path.join(context.nautobot_chatops_extension_grafana.compose_dir, compose_file)
@@ -250,6 +255,71 @@ def post_upgrade(context):
     command = "nautobot-server post_upgrade"
 
     run_command(context, command)
+
+
+# ------------------------------------------------------------------------------
+# Development DB Tasks
+# ------------------------------------------------------------------------------
+@task
+def db_import(context):
+    """Import test data.
+
+    Args:
+        context (obj): Used to run specific commands
+    """
+    # Start the 2 DB containers
+    docker_compose(context, "up -d postgres mattermost_db")
+    time.sleep(2)
+
+    # Copy DBs
+    # nautobot_chatops_extension_grafana_postgres_1
+    nautobot_copy_command = f"docker cp {context.nautobot_chatops_extension_grafana.compose_dir}/nautobot_backup.dump {context.nautobot_chatops_extension_grafana.project_name}_postgres_1:/tmp/nautobot_backup.dump"
+    context.run(nautobot_copy_command)
+    # nautobot_chatops_extension_grafana_mattermost_db_1
+    mattermost_copy_command = f"docker cp {context.nautobot_chatops_extension_grafana.compose_dir}/mattermost_backup.dump {context.nautobot_chatops_extension_grafana.project_name}_mattermost_db_1:/tmp/mattermost_backup.dump"
+    context.run(mattermost_copy_command)
+
+    # Restore DBs
+    docker_compose(
+        context,
+        'exec postgres sh -c "psql -h localhost -U nautobot < /tmp/nautobot_backup.dump"',
+        pty=True,
+    )
+    docker_compose(
+        context,
+        f'exec mattermost_db sh -c "psql -h localhost -d mattermost -U mmuser < /tmp/mattermost_backup.dump"',
+        pty=True,
+    )
+    # stop(context)
+
+
+@task
+def db_export(context):
+    """Export Database data to nautobot_backup.dump and mattermost_backup.dump.
+
+    Args:
+        context (obj): Used to run specific commands
+    """
+    start(context)
+    # Export DBs
+    docker_compose(
+        context,
+        f'exec postgres sh -c "pg_dump -h localhost -d nautobot -U nautobot > /tmp/nautobot_backup.dump"',
+        pty=True,
+    )
+    docker_compose(
+        context,
+        f'exec mattermost_db sh -c "pg_dump -h localhost -d mattermost -U mmuser > /tmp/mattermost_backup.dump"',
+        pty=True,
+    )
+
+    # Copy DBs locally
+    # nautobot_chatops_extension_grafana_postgres_1
+    nautobot_copy_command = f"docker cp {context.nautobot_chatops_extension_grafana.project_name}_postgres_1:/tmp/nautobot_backup.dump {context.nautobot_chatops_extension_grafana.compose_dir}/nautobot_backup.dump"
+    context.run(nautobot_copy_command)
+    # nautobot_chatops_extension_grafana_mattermost_db_1
+    mattermost_copy_command = f"docker cp {context.nautobot_chatops_extension_grafana.project_name}_mattermost_db_1:/tmp/mattermost_backup.dump {context.nautobot_chatops_extension_grafana.compose_dir}/mattermost_backup.dump"
+    context.run(mattermost_copy_command)
 
 
 # ------------------------------------------------------------------------------
