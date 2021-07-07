@@ -1,195 +1,196 @@
 # jsonschema: schemas/panels
 ---
-- dashboard_slug: "netbox-application-metrics"
-  dashboard_uid: "CS1NJwSGk"
-  panels:
-    - command_name: "netbox-demo"
-      panel_id: 15
-      friendly_name: "Demo NetBox Queries"
-      variables:
-        - name: region
-          query: Region
-          includeincmd: False
-          includeinurl: True
-          modelattr: slug
-          value: "{{ region.slug }}"
-          response: tennessee
-        - name: site
-          query: "Site"
-          modelattr: name
-          friendly_name: "Site Name"
-          value: "{{ site.slug }}"
-          filter:
-            region: "{{ region.id }}"
-        - name: device
-          query: "Device"
-          friendly_name: "Device Name"
-          modelattr: name
-          value: "{{ device.name }}"
-          filter:
-            site: "{{ site.id }}"
-        - name: serial
-          includeincmd: False
-          includeinurl: True
-          value: "{{ device.serial }}"
-- dashboard_slug: "network-automation-dashboard"
-  dashboard_uid: "J6m5WATWz"
-  panels:
-    - command_name: "top-hosts"
+dashboards:
+  - dashboard_slug: "netbox-application-metrics"
+    dashboard_uid: "CS1NJwSGk"
+    panels:
+      - command_name: "netbox-demo"
+        panel_id: 15
+        friendly_name: "Demo NetBox Queries"
+        variables:
+          - name: region
+            query: Region
+            includeincmd: False
+            includeinurl: True
+            modelattr: slug
+            value: "{{ region.slug }}"
+            response: tennessee
+          - name: site
+            query: "Site"
+            modelattr: name
+            friendly_name: "Site Name"
+            value: "{{ site.slug }}"
+            filter:
+              region: "{{ region.id }}"
+          - name: device
+            query: "Device"
+            friendly_name: "Device Name"
+            modelattr: name
+            value: "{{ device.name }}"
+            filter:
+              site: "{{ site.id }}"
+          - name: serial
+            includeincmd: False
+            includeinurl: True
+            value: "{{ device.serial }}"
+  - dashboard_slug: "network-automation-dashboard"
+    dashboard_uid: "J6m5WATWz"
+    panels:
+      - command_name: "top-hosts"
+        panel_id: 8
+        friendly_name: "Network Automation Top Hosts"
+        variables:
+          - name: Playbook
+            includeincmd: False
+            includeinurl: True
+            response: All
+          - name: Site
+            includeincmd: False
+            includeinurl: True
+            response: All
+          - name: Stage
+            includeincmd: False
+            includeinurl: True
+            response: All
+          - name: Device
+            includeincmd: False
+            includeinurl: True
+            response: All
+      - command_name: "top-hosts-by-site"
+        panel_id: 8
+        friendly_name: "Network Automation Top Hosts"
+        variables:
+          - name: Playbook
+            includeincmd: False
+            includeinurl: True
+            response: All
+          - name: Site
+            query: "Site"
+            modelattr: slug
+            friendly_name: "Site Name"
+            value: "{{ Site.slug }}"
+          - name: Stage
+            includeincmd: False
+            includeinurl: True
+            response: All
+          - name: Device
+            includeincmd: False
+            includeinurl: True
+            response: All
+  - dashboard_slug: "configuration-compliance"
+    dashboard_uid: "YnmtZNjWz"
+    panels:
+      - command_name: "config-compliance-map"
+        panel_id: 8
+        friendly_name: "Configuration Compliance Map"
+      - command_name: "config-compliance"
+        panel_id: 10
+        friendly_name: "Configuration Compliance Map"
+  - dashboard_slug: network-automation-dashboard
+    dashboard_uid: J6m5WATWz
+    panels:
+    - command_name: jobs-run
+      friendly_name: Jobs Run
+      panel_id: 12
+    - command_name: chat-ops
+      friendly_name: Chat Ops
+      panel_id: 39
+    - command_name: manual-tasks
+      friendly_name: Manual Tasks
+      panel_id: 37
+    - command_name: job-status
+      friendly_name: Job Status
+      panel_id: 40
+    - command_name: time-savings
+      friendly_name: Time Savings
+      panel_id: 4
+    - command_name: workflows-by-user
+      friendly_name: Workflows by User
+      panel_id: 30
+    - command_name: cost-savings
+      friendly_name: Cost Savings
+      panel_id: 26
+    - command_name: total-hosts
+      friendly_name: Total Hosts
+      panel_id: 14
+    - command_name: '%-automated'
+      friendly_name: '% Automated'
+      panel_id: 41
+    - command_name: avg-job-time
+      friendly_name: Avg Job Time
+      panel_id: 18
+    - command_name: top-hosts
+      friendly_name: Top Hosts
       panel_id: 8
-      friendly_name: "Network Automation Top Hosts"
-      variables:
-        - name: Playbook
-          includeincmd: False
-          includeinurl: True
-          response: All
-        - name: Site
-          includeincmd: False
-          includeinurl: True
-          response: All
-        - name: Stage
-          includeincmd: False
-          includeinurl: True
-          response: All
-        - name: Device
-          includeincmd: False
-          includeinurl: True
-          response: All
-    - command_name: "top-hosts-by-site"
-      panel_id: 8
-      friendly_name: "Network Automation Top Hosts"
-      variables:
-        - name: Playbook
-          includeincmd: False
-          includeinurl: True
-          response: All
-        - name: Site
-          query: "Site"
-          modelattr: slug
-          friendly_name: "Site Name"
-          value: "{{ Site.slug }}"
-        - name: Stage
-          includeincmd: False
-          includeinurl: True
-          response: All
-        - name: Device
-          includeincmd: False
-          includeinurl: True
-          response: All
-- dashboard_slug: "configuration-compliance"
-  dashboard_uid: "YnmtZNjWz"
-  panels:
-    - command_name: "config-compliance-map"
-      panel_id: 8
-      friendly_name: "Configuration Compliance Map"
-    - command_name: "config-compliance"
+    - command_name: top-failed-hosts
+      friendly_name: Top Failed Hosts
+      panel_id: 27
+    - command_name: successful-jobs
+      friendly_name: Successful Jobs
+      panel_id: 28
+    - command_name: failed-jobs
+      friendly_name: Failed Jobs
+      panel_id: 25
+    - command_name: successful-jobs
+      friendly_name: Successful Jobs
+      panel_id: 24
+    - command_name: failed-jobs
+      friendly_name: Failed Jobs
+      panel_id: 29
+    - command_name: job-success/fail
+      friendly_name: Job Success/Fail
+      panel_id: 16
+    - command_name: playbook-execution-time
+      friendly_name: Playbook Execution Time
+      panel_id: 22
+    - command_name: host-stats
+      friendly_name: Host Stats
       panel_id: 10
-      friendly_name: "Configuration Compliance Map"
-- dashboard_slug: network-automation-dashboard
-  dashboard_uid: J6m5WATWz
-  panels:
-  - command_name: jobs-run
-    friendly_name: Jobs Run
-    panel_id: 12
-  - command_name: chat-ops
-    friendly_name: Chat Ops
-    panel_id: 39
-  - command_name: manual-tasks
-    friendly_name: Manual Tasks
-    panel_id: 37
-  - command_name: job-status
-    friendly_name: Job Status
-    panel_id: 40
-  - command_name: time-savings
-    friendly_name: Time Savings
-    panel_id: 4
-  - command_name: workflows-by-user
-    friendly_name: Workflows by User
-    panel_id: 30
-  - command_name: cost-savings
-    friendly_name: Cost Savings
-    panel_id: 26
-  - command_name: total-hosts
-    friendly_name: Total Hosts
-    panel_id: 14
-  - command_name: '%-automated'
-    friendly_name: '% Automated'
-    panel_id: 41
-  - command_name: avg-job-time
-    friendly_name: Avg Job Time
-    panel_id: 18
-  - command_name: top-hosts
-    friendly_name: Top Hosts
-    panel_id: 8
-  - command_name: top-failed-hosts
-    friendly_name: Top Failed Hosts
-    panel_id: 27
-  - command_name: successful-jobs
-    friendly_name: Successful Jobs
-    panel_id: 28
-  - command_name: failed-jobs
-    friendly_name: Failed Jobs
-    panel_id: 25
-  - command_name: successful-jobs
-    friendly_name: Successful Jobs
-    panel_id: 24
-  - command_name: failed-jobs
-    friendly_name: Failed Jobs
-    panel_id: 29
-  - command_name: job-success/fail
-    friendly_name: Job Success/Fail
-    panel_id: 16
-  - command_name: playbook-execution-time
-    friendly_name: Playbook Execution Time
-    panel_id: 22
-  - command_name: host-stats
-    friendly_name: Host Stats
-    panel_id: 10
-  - command_name: avg-time-by-job
-    friendly_name: Avg Time by Job
-    panel_id: 20
-  - command_name: job-heatmap
-    friendly_name: Job Heatmap
-    panel_id: 6
-  - command_name: chat-commands
-    friendly_name: Chat Commands
-    panel_id: 45
-  - command_name: chat-commands-(total)
-    friendly_name: Chat Commands (Total)
-    panel_id: 43
-  - command_name: chat-heatmap
-    friendly_name: Chat Heatmap
-    panel_id: 47
-- dashboard_slug: a-django-prometheus
-  dashboard_uid: y1s1P8g7z
-  panels:
-  - command_name: total-requests
-    friendly_name: Total Requests
-    panel_id: 13
-  - command_name: 2xx-responses
-    friendly_name: 2XX Responses
-    panel_id: 15
-  - command_name: 4xx-responses
-    friendly_name: 4XX Responses
-    panel_id: 16
-  - command_name: 5xx-responses
-    friendly_name: 5XX Responses
-    panel_id: 17
-  - command_name: requests
-    friendly_name: Requests
-    panel_id: 2
-  - command_name: request-latency
-    friendly_name: Request Latency
-    panel_id: 4
-  - command_name: responses
-    friendly_name: Responses
-    panel_id: 7
-  - command_name: response-status
-    friendly_name: Response Status
-    panel_id: 11
-  - command_name: database-ops
-    friendly_name: Database Ops
-    panel_id: 9
-  - command_name: models-stats
-    friendly_name: Models stats
-    panel_id: 18
+    - command_name: avg-time-by-job
+      friendly_name: Avg Time by Job
+      panel_id: 20
+    - command_name: job-heatmap
+      friendly_name: Job Heatmap
+      panel_id: 6
+    - command_name: chat-commands
+      friendly_name: Chat Commands
+      panel_id: 45
+    - command_name: chat-commands-(total)
+      friendly_name: Chat Commands (Total)
+      panel_id: 43
+    - command_name: chat-heatmap
+      friendly_name: Chat Heatmap
+      panel_id: 47
+  - dashboard_slug: a-django-prometheus
+    dashboard_uid: y1s1P8g7z
+    panels:
+    - command_name: total-requests
+      friendly_name: Total Requests
+      panel_id: 13
+    - command_name: 2xx-responses
+      friendly_name: 2XX Responses
+      panel_id: 15
+    - command_name: 4xx-responses
+      friendly_name: 4XX Responses
+      panel_id: 16
+    - command_name: 5xx-responses
+      friendly_name: 5XX Responses
+      panel_id: 17
+    - command_name: requests
+      friendly_name: Requests
+      panel_id: 2
+    - command_name: request-latency
+      friendly_name: Request Latency
+      panel_id: 4
+    - command_name: responses
+      friendly_name: Responses
+      panel_id: 7
+    - command_name: response-status
+      friendly_name: Response Status
+      panel_id: 11
+    - command_name: database-ops
+      friendly_name: Database Ops
+      panel_id: 9
+    - command_name: models-stats
+      friendly_name: Models stats
+      panel_id: 18
