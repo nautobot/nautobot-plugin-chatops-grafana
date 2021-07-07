@@ -48,7 +48,7 @@ def initialize_subcommands():
         f"timespan={_grafana_handler.get_timespan()}",
         f"timezone={_grafana_handler.get_timezone()}",
     ]
-    for dashboard in raw_panels:
+    for dashboard in raw_panels["dashboards"]:
         for panel in dashboard["panels"]:
             panel_variables = []
             # Build parameters list from dynamic variables in panels
@@ -94,7 +94,7 @@ def chat_parse_args(dispatcher, *args):
     panel = None
 
     # Find the panel config matching the current subcommand
-    for dashboard in raw_panels:
+    for dashboard in raw_panels["dashboards"]:
         panel = next((i for i in dashboard["panels"] if f"get-{i['command_name']}" == current_subcommand), None)
         if panel:
             dashboard_slug = dashboard["dashboard_slug"]

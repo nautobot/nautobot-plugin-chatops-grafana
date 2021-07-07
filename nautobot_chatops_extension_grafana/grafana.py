@@ -9,6 +9,8 @@ import yaml
 from django.conf import settings
 from requests.exceptions import RequestException
 import requests
+from nautobot_chatops_extension_grafana.validator import validate
+from jsonschema import ValidationError
 
 PLUGIN_SETTINGS = settings.PLUGINS_CONFIG["nautobot_chatops_extension_grafana"]
 logger = logging.getLogger("nautobot.plugin.grafana")
@@ -43,6 +45,11 @@ class GrafanaHandler:
 
     def load_panels(self):
         """This method loads the yaml configuration file, and validates the schema."""
+        # Validate the YAML configuration files.
+        schema_errors = validate()
+        if schema_errors:
+            raise ValidationError(",".join(schema_errors))
+
         try:
             with open(self.config.config_file) as config_file:
                 # TODO validate yaml with schema
@@ -180,7 +187,7 @@ class GrafanaHandler:
     # TODO: Build Grafana URL from jinja template?
     def get_png_url(self, dashboard_slug: str, panel: dict):
         """Generate the URL and the Payload for the request."""
-        dashboard = next((i for i in self.panels if i["dashboard_slug"] == dashboard_slug), None)
+        dashboard = next((i for i in self.panels["dashboards"] if i["dashboard_slug"] == dashboard_slug), None)
         payload = {
             "orgId": self.config.grafana_org_id,
             "panelId": panel["panel_id"],
