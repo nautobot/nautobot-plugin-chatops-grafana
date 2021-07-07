@@ -41,7 +41,7 @@ namespace.configure(
         "nautobot_chatops_extension_grafana": {
             "nautobot_ver": "1.0.2",
             "project_name": "nautobot_chatops_extension_grafana",
-            "python_ver": "3.6",
+            "python_ver": "3.7",
             "local": False,
             "compose_dir": os.path.join(os.path.dirname(__file__), "development"),
             "compose_files": [
