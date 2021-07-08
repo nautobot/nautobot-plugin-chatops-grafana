@@ -1,23 +1,23 @@
 [tool.poetry]
-name = "nautobot-chatops-extension-grafana"
+name = "nautobot-plugin-chatops-grafana"
 version = "0.1.0"
-description = "Nautobot Chatops Extension Grafana"
+description = "Nautobot Plugin Chatops Grafana"
 authors = ["Network to Code, LLC <opensource@networktocode.com>"]
 license = "Apache-2.0"
 readme = "README.md"
-homepage = "https://github.com/nautobot/nautobot-chatops-extension-grafana"
-repository = "https://github.com/nautobot/nautobot-chatops-extension-grafana"
+homepage = "https://github.com/nautobot/nautobot-plugin-chatops-grafana"
+repository = "https://github.com/nautobot/nautobot-plugin-chatops-grafana"
 keywords = ["nautobot", "nautobot-plugin"]
 include = [
     "LICENSE",
     "README.md",
 ]
 packages = [
-    { include = "nautobot_chatops_extension_grafana" },
+    { include = "nautobot_plugin_chatops_grafana" },
 ]
 
 [tool.poetry.plugins."nautobot.workers"]
-"grafana" = "nautobot_chatops_extension_grafana.worker:grafana"
+"grafana" = "nautobot_plugin_chatops_grafana.worker:grafana"
 
 [tool.poetry.dependencies]
 # Used for local development
@@ -46,8 +46,8 @@ prybar = "^1.0.0"
 nautobot = ["nautobot"]
 
 [tool.schema_enforcer]
-main_directory = "nautobot_chatops_extension_grafana/schema"
-data_file_search_directories = ["./nautobot_chatops_extension_grafana"]
+main_directory = "nautobot_plugin_chatops_grafana/schema"
+data_file_search_directories = ["./nautobot_plugin_chatops_grafana"]
 
 # Currently only YAML files are validated.
 data_file_extensions = [".yaml", ".yml"]

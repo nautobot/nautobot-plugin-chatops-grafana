@@ -3,7 +3,7 @@ import unittest
 import os
 import toml
 
-from nautobot_chatops_extension_grafana import __version__ as project_version
+from nautobot_plugin_chatops_grafana import __version__ as project_version
 
 
 class TestVersion(unittest.TestCase):

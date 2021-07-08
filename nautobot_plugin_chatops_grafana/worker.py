@@ -16,7 +16,7 @@ from .grafana import GrafanaHandler
 logger = logging.getLogger("nautobot.plugin.grafana")
 
 TIMEOUT = "60"
-PLUGIN_SETTINGS = settings.PLUGINS_CONFIG["nautobot_chatops_extension_grafana"]
+PLUGIN_SETTINGS = settings.PLUGINS_CONFIG["nautobot_plugin_chatops_grafana"]
 GRAFANA_LOGO_PATH = "grafana/grafana_icon.png"
 GRAFANA_LOGO_ALT = "Grafana Logo"
 
@@ -240,77 +240,79 @@ def chat_validate_nautobot_args(  # pylint: disable=too-many-locals
 ) -> bool:
     """Parse through args and validate them against the definition with the panel."""
     validated_variables = {}
+    print(panel.get("variables", []))
     for variable in panel.get("variables", []):
-        if variable.get("query", False):
-            logger.debug("Validating Variable %s with input %s", variable["name"], parsed_args[variable["name"]])
-            # A nautobot Query is defined so first lets get all of those objects
-            try:
-                model = getattr(models, variable["query"])
-                objects = model.objects.all()
-            except Exception as err:  # pylint: disable=broad-except
-                logger.error("Unable to find class %s in dcim.models: %s", variable["query"], err)
-                dispatcher.send_error(
-                    f"Sorry, {dispatcher.user_mention()} there was an error with your panel definition, "
-                    f"I was unable to find class {variable['query']} in dcim.models"
-                )
-                return False
-            if not variable.get("modelattr", False):
-                dispatcher.send_error(
-                    f"Sorry, {dispatcher.user_mention()} there was an error with your panel definition, "
-                    f"When specifying a query, a modelattr is also required"
-                )
-                return False
-            if objects.count() < 1:
-                dispatcher.send_error(
-                    f"Sorry, {dispatcher.user_mention()}, your query for"
-                    f" {variable['query']} returned {objects.count()}."
-                )
-                return False
-
-            # Now lets validate the object and prompt the user for a correct object
-            object_filter = variable.get("filter", {})
-            if parsed_args[variable["name"]] and parsed_args[variable["name"]] != "":
-                object_filter[variable["modelattr"]] = parsed_args[variable["name"]]
-
-            # Parse Jinja in filter
-            for filter_key in object_filter.keys():
-                template = Template(object_filter[filter_key])
-                object_filter[filter_key] = template.render(validated_variables)
-
-            try:
-                filtered_objects = objects.filter(**object_filter)
-            except Exception:  # pylint: disable=broad-except
-                logger.error("Unable to filter %s by %s", variable["query"], object_filter)
-                dispatcher.send_error(
-                    f"Sorry, {dispatcher.user_mention()} there was an error with your panel definition, "
-                    f"I was unable to filter {variable['query']} by {object_filter}"
-                )
-                return False
-            if filtered_objects.count() != 1:
-                # dispatcher.send_error(
-                #     f"Sorry, {dispatcher.user_mention()}, your query for {variable['query']} "
-                #     f"filtering by {object_filter} returned {filtered_objects.count()} it must return exactly 1"
-                # )
-                if filtered_objects.count() > 1:
-                    choices = [
-                        (f"{filtered_object.name}", getattr(filtered_object, variable["modelattr"]))
-                        for filtered_object in filtered_objects
-                    ]
-                else:
-                    choices = [(f"{obj.name}", getattr(obj, variable["modelattr"])) for obj in objects]
-                helper_text = (
-                    f"{helper_prefix} Requires {variable['friendly_name']}"
-                    if variable.get("friendly_name", False)
-                    else helper_prefix
-                )
-                parsed_args[variable["name"]] = dispatcher.prompt_from_menu(action_id, helper_text, choices)
-                return False
-            # Add the validated device to the dict so templates can use it later
-            logger.debug("Validated Variable %s with input %s", variable["name"], parsed_args[variable["name"]])
-            validated_variables[variable["name"]] = filtered_objects[0].__dict__
-        else:
+        if not variable.get("query", False):
             logger.debug("Validated Variable %s with input %s", variable["name"], parsed_args[variable["name"]])
             validated_variables[variable["name"]] = parsed_args[variable["name"]]
+
+        print("Validating Variable %s with input %s", variable["name"], parsed_args[variable["name"]])
+        logger.debug("Validating Variable %s with input %s", variable["name"], parsed_args[variable["name"]])
+        # A nautobot Query is defined so first lets get all of those objects
+        try:
+            model = getattr(models, variable["query"])
+            objects = model.objects.all()
+        except Exception as err:  # pylint: disable=broad-except
+            logger.error("Unable to find class %s in dcim.models: %s", variable["query"], err)
+            dispatcher.send_error(
+                f"Sorry, {dispatcher.user_mention()} there was an error with your panel definition, "
+                f"I was unable to find class {variable['query']} in dcim.models"
+            )
+            return False
+        if not variable.get("modelattr", False):
+            dispatcher.send_error(
+                f"Sorry, {dispatcher.user_mention()} there was an error with your panel definition, "
+                f"When specifying a query, a modelattr is also required"
+            )
+            return False
+        if objects.count() < 1:
+            dispatcher.send_error(
+                f"Sorry, {dispatcher.user_mention()}, your query for"
+                f" {variable['query']} returned {objects.count()}."
+            )
+            return False
+
+        # Now lets validate the object and prompt the user for a correct object
+        object_filter = variable.get("filter", {})
+        if parsed_args[variable["name"]] and parsed_args[variable["name"]] != "":
+            object_filter[variable["modelattr"]] = parsed_args[variable["name"]]
+
+        # Parse Jinja in filter
+        for filter_key in object_filter.keys():
+            template = Template(object_filter[filter_key])
+            object_filter[filter_key] = template.render(validated_variables)
+
+        try:
+            filtered_objects = objects.filter(**object_filter)
+        except Exception:  # pylint: disable=broad-except
+            logger.error("Unable to filter %s by %s", variable["query"], object_filter)
+            dispatcher.send_error(
+                f"Sorry, {dispatcher.user_mention()} there was an error with your panel definition, "
+                f"I was unable to filter {variable['query']} by {object_filter}"
+            )
+            return False
+        if filtered_objects.count() != 1:
+            # dispatcher.send_error(
+            #     f"Sorry, {dispatcher.user_mention()}, your query for {variable['query']} "
+            #     f"filtering by {object_filter} returned {filtered_objects.count()} it must return exactly 1"
+            # )
+            if filtered_objects.count() > 1:
+                choices = [
+                    (f"{filtered_object.name}", getattr(filtered_object, variable["modelattr"]))
+                    for filtered_object in filtered_objects
+                ]
+            else:
+                choices = [(f"{obj.name}", getattr(obj, variable["modelattr"])) for obj in objects]
+            helper_text = (
+                f"{helper_prefix} Requires {variable['friendly_name']}"
+                if variable.get("friendly_name", False)
+                else helper_prefix
+            )
+            parsed_args[variable["name"]] = dispatcher.prompt_from_menu(action_id, helper_text, choices)
+            return False
+        # Add the validated device to the dict so templates can use it later
+        logger.debug("Validated Variable %s with input %s", variable["name"], parsed_args[variable["name"]])
+        validated_variables[variable["name"]] = filtered_objects[0].__dict__
 
         # Now we now we have a valid device lets parse the value template for this variable
         template = Template(variable.get("value", str(validated_variables[variable["name"]])))

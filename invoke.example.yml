@@ -1,6 +1,6 @@
 ---
-nautobot_chatops_extension_grafana:
-  project_name: "nautobot-chatops-extension-grafana"
+nautobot_plugin_chatops_grafana:
+  project_name: "nautobot-plugin-chatops-grafana"
   nautobot_ver: "1.0.2"
   local: false
   python_ver: "3.6"

@@ -1,4 +1,4 @@
-"""Unit tests for nautobot_chatops_extension_grafana."""
+"""Unit tests for nautobot_plugin_chatops_grafana."""
 from django.contrib.auth import get_user_model
 from django.test import TestCase
 from django.urls import reverse

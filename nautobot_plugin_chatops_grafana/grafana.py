@@ -11,10 +11,10 @@ from jsonschema import ValidationError
 from pydantic import BaseModel, FilePath  # pylint: disable=no-name-in-module
 from requests.exceptions import RequestException
 from typing_extensions import Literal
-from nautobot_chatops_extension_grafana.validator import validate
+from nautobot_plugin_chatops_grafana.validator import validate
 
 
-PLUGIN_SETTINGS = settings.PLUGINS_CONFIG["nautobot_chatops_extension_grafana"]
+PLUGIN_SETTINGS = settings.PLUGINS_CONFIG["nautobot_plugin_chatops_grafana"]
 logger = logging.getLogger("nautobot.plugin.grafana")
 
 
