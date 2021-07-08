@@ -1,9 +1,13 @@
+"""Nautobot Server CLI extension for Grafana ChatOps."""
 from django.core.management.base import BaseCommand
 from nautobot_chatops_extension_grafana.validator import validate
 
 
 class Command(BaseCommand):
+    """Extends the nautobot-server command to handle schema enforcer."""
+
     def handle(self, *args, **kwargs):
+        """Handles incoming request passed to the validate_schema command."""
         schema_errors = validate(strict=kwargs["strict"])
         if schema_errors:
             print(",".join(schema_errors))
@@ -11,6 +15,11 @@ class Command(BaseCommand):
             print("ALL SCHEMA VALIDATION CHECKS PASSED √√")
 
     def add_arguments(self, parser):
+        """Adds arguments to the command.
+
+        Args:
+            parser: Argument parser.
+        """
         parser.add_argument(
             "--strict",
             action="store_true",

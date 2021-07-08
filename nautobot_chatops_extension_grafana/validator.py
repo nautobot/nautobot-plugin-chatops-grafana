@@ -1,5 +1,7 @@
-from termcolor import colored
+"""Schema Enforcer wrapper used to mimic the validate cli functionality."""
 from typing import List
+from termcolor import colored
+
 from schema_enforcer import config
 from schema_enforcer.schemas.manager import SchemaManager
 from schema_enforcer.instances.file import InstanceFileManager
@@ -12,13 +14,12 @@ def validate(strict: bool = False) -> List[str]:
     Args:
         strict (bool): Forces a stricter schema check that warns about unexpected additional properties
     """
-
     config.load()
 
     try:
         smgr = SchemaManager(config=config.SETTINGS)
     except InvalidJSONSchema as exc:
-        raise InvalidJSONSchema(str(exc))
+        return [str(exc)]
 
     if not smgr.schemas:
         return []

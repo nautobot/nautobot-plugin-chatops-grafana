@@ -961,6 +961,19 @@ six = "*"
 test = ["pytest (>=2.7.3)", "pytest-cov", "coveralls", "futures", "pytest-benchmark", "mock"]
 
 [[package]]
+name = "prybar"
+version = "1.0.0"
+description = "Create temporary pkg_resources entry points at runtime."
+category = "dev"
+optional = false
+python-versions = "~=3.6"
+
+[package.extras]
+dev = ["flake8"]
+doc = ["sphinx"]
+test = ["pytest", "pytest-cov"]
+
+[[package]]
 name = "psycopg2-binary"
 version = "2.8.6"
 description = "psycopg2 - Python-PostgreSQL Database Adapter"
@@ -1599,7 +1612,7 @@ nautobot = ["nautobot"]
 [metadata]
 lock-version = "1.1"
 python-versions = "^3.7"
-content-hash = "349a9265c203a35c69b0c2ac2d376f67ab3fcc4f63644e0d33d57204d1863cd5"
+content-hash = "239301d17277675727751d7b55cc461fc54f692f0ad4c8a33e226642f6a978e7"
 
 [metadata.files]
 aniso8601 = [
@@ -2097,6 +2110,10 @@ prometheus-client = [
 ]
 promise = [
     {file = "promise-2.3.tar.gz", hash = "sha256:dfd18337c523ba4b6a58801c164c1904a9d4d1b1747c7d5dbf45b693a49d93d0"},
+]
+prybar = [
+    {file = "prybar-1.0.0-py2.py3-none-any.whl", hash = "sha256:07d5b12fb12da703fb266d67d3a117e1c20a30cd9daa274586cc4af8081baea7"},
+    {file = "prybar-1.0.0.tar.gz", hash = "sha256:9f2af7b4fdce2d0febf6fb73a0854956a384fad65df19c3f57caab7c4726a88a"},
 ]
 psycopg2-binary = [
     {file = "psycopg2-binary-2.8.6.tar.gz", hash = "sha256:11b9c0ebce097180129e422379b824ae21c8f2a6596b159c7659e2e5a00e1aa0"},

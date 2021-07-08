@@ -287,7 +287,7 @@ def db_import(context):
     )
     docker_compose(
         context,
-        f'exec mattermost_db sh -c "psql -h localhost -d mattermost -U mmuser < /tmp/mattermost_backup.dump"',
+        'exec mattermost_db sh -c "psql -h localhost -d mattermost -U mmuser < /tmp/mattermost_backup.dump"',
         pty=True,
     )
     # stop(context)
@@ -304,12 +304,12 @@ def db_export(context):
     # Export DBs
     docker_compose(
         context,
-        f'exec postgres sh -c "pg_dump -h localhost -d nautobot -U nautobot > /tmp/nautobot_backup.dump"',
+        'exec postgres sh -c "pg_dump -h localhost -d nautobot -U nautobot > /tmp/nautobot_backup.dump"',
         pty=True,
     )
     docker_compose(
         context,
-        f'exec mattermost_db sh -c "pg_dump -h localhost -d mattermost -U mmuser > /tmp/mattermost_backup.dump"',
+        'exec mattermost_db sh -c "pg_dump -h localhost -d mattermost -U mmuser > /tmp/mattermost_backup.dump"',
         pty=True,
     )
 

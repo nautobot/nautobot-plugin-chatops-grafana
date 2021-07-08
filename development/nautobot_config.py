@@ -306,5 +306,5 @@ DEBUG_TOOLBAR_CONFIG = {"SHOW_TOOLBAR_CALLBACK": lambda _request: DEBUG and not 
 
 if "debug_toolbar" not in EXTRA_INSTALLED_APPS:
     EXTRA_INSTALLED_APPS.append("debug_toolbar")
-if "debug_toolbar.middleware.DebugToolbarMiddleware" not in MIDDLEWARE:
-    MIDDLEWARE.insert(0, "debug_toolbar.middleware.DebugToolbarMiddleware")
+if "debug_toolbar.middleware.DebugToolbarMiddleware" not in MIDDLEWARE:  # noqa: F405
+    MIDDLEWARE.insert(0, "debug_toolbar.middleware.DebugToolbarMiddleware")  # noqa: F405

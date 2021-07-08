@@ -1,22 +1,23 @@
 """This module is intended to handle grafana requests generically perhaps outside of nautobot."""
-
-from datetime import timedelta, datetime
-from urllib.parse import quote
+import datetime
 import logging
-from pydantic import BaseModel, FilePath
-from typing_extensions import Literal
-import yaml
-from django.conf import settings
-from requests.exceptions import RequestException
+import urllib.parse
 import requests
-from nautobot_chatops_extension_grafana.validator import validate
+import yaml
+
+from django.conf import settings
 from jsonschema import ValidationError
+from pydantic import BaseModel, FilePath  # pylint: disable=no-name-in-module
+from requests.exceptions import RequestException
+from typing_extensions import Literal
+from nautobot_chatops_extension_grafana.validator import validate
+
 
 PLUGIN_SETTINGS = settings.PLUGINS_CONFIG["nautobot_chatops_extension_grafana"]
 logger = logging.getLogger("nautobot.plugin.grafana")
 
 
-class GrafanaConfigSettings(BaseModel):
+class GrafanaConfigSettings(BaseModel):  # pylint: disable=too-few-public-methods
     """Model for config parameters to validate config schema."""
 
     grafana_url: str
@@ -24,7 +25,7 @@ class GrafanaConfigSettings(BaseModel):
     default_width: int
     default_height: int
     default_theme: Literal["light", "dark"]
-    default_timespan: timedelta
+    default_timespan: datetime.timedelta
     grafana_org_id: int
     default_tz: str
     config_file: FilePath
@@ -131,7 +132,7 @@ class GrafanaHandler:
         )
         self.config = new_config
 
-    def set_timespan(self, new_timespan: timedelta):
+    def set_timespan(self, new_timespan: datetime.timedelta):
         """Simple Set Timespan.  Must redefine the config model for pydantic to validate."""
         new_config = GrafanaConfigSettings(
             grafana_url=self.config.grafana_url,
@@ -191,12 +192,13 @@ class GrafanaHandler:
         payload = {
             "orgId": self.config.grafana_org_id,
             "panelId": panel["panel_id"],
-            "tz": quote(self.config.default_tz),
+            "tz": urllib.parse.quote(self.config.default_tz),
             "theme": self.config.default_theme,
         }
-        timestamp_now = datetime.utcnow()
-        from_time = str(int((timestamp_now - self.config.default_timespan).timestamp() * 1e3))
-        to_time = str(int(timestamp_now.timestamp() * 1e3))
+        # timestamp_now = datetime.datetime.utcnow()
+        #
+        # from_time = str(int((timestamp_now - self.config.default_timespan).timestamp() * 1e3))
+        # to_time = str(int(timestamp_now.timestamp() * 1e3))
         # if from_time != to_time:
         #     payload['from'] = from_time
         #     payload['to'] = to_time

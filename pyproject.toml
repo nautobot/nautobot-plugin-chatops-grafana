@@ -39,6 +39,7 @@ pydocstyle = "*"
 pylint = "*"
 pylint-django = "*"
 yamllint = "*"
+prybar = "^1.0.0"
 
 [tool.poetry.extras]
 nautobot = ["nautobot"]
