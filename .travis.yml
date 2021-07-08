@@ -7,7 +7,7 @@ env:
   # Each version of Nautobot listed here must have a corresponding directory/configuration file
   # under development/nautobot_<NAUTOBOT_VER>/configuration.py
   matrix:
-    - "INVOKE_NAUTOBOT-CHATOPS-EXTENSION-GRAFANA_NAUTOBOT_VER=1.0.2"
+    - "INVOKE_NAUTOBOT_CHATOPS_EXTENSION_GRAFANA_NAUTOBOT_VER=1.0.2"
 # Add your encrypted secret below, you can encrypt secret using "travis encrypt"
 # https://docs.travis-ci.com/user/environment-variables/#defining-encrypted-variables-in-travisyml
 # global:
