@@ -1,5 +1,5 @@
 """Test cases for the Nautobot workers module."""
-from django.test import TestCase
+from django.test import SimpleTestCase
 
 from prybar import dynamic_entrypoint
 
@@ -8,17 +8,16 @@ from nautobot_chatops.tests.workers.dynamic_commands import dynamic_command, dyn
 import nautobot_chatops.workers
 
 
-class TestGrafana(TestCase):
+class TestGrafana(SimpleTestCase):
     """Test the generic functions provided by nautobot_chatops.workers."""
 
     def setUp(self):
         """Cleanup commands registry."""
         # Due to testing with multiple entry points with multiple tests we must reinitialize
         # the command registry.  This will produce warnings but will not happen in production.
-        nautobot_chatops.workers._commands_registry["initialized"] = False  # pylint: disable=protected-access
-        print("Hello World")
+        nautobot_chatops.workers._registry_initialized = False  # pylint: disable=protected-access
 
-    def test_grafana_parse_command_string(self):
+    def test_parse_command_string(self):
         """Verify that various inputs to parse_command_string() are handled correctly."""
         for string, exp_cmd, exp_sub, exp_params in (
             ("", "", "", []),
@@ -35,37 +34,47 @@ class TestGrafana(TestCase):
             ("   command  sub-command  arg1   arg2   ", "command", "sub-command", ["arg1", "arg2"]),
             ("command sub-command arg1 arg2 arg3", "command", "sub-command", ["arg1", "arg2", "arg3"]),
             ("   command sub-command   arg1   arg2   arg3", "command", "sub-command", ["arg1", "arg2", "arg3"]),
+            (
+                "command sub-command 'Las Vegas' 'Dallas' Orlando",
+                "command",
+                "sub-command",
+                ["Las Vegas", "Dallas", "Orlando"],
+            ),
         ):
             command, subcommand, params = parse_command_string(string)
             self.assertEqual(command, exp_cmd)
             self.assertEqual(subcommand, exp_sub)
             self.assertEqual(params, exp_params)
 
-    def test_grafana_get_commands_registry_multiple_same_file(self):
+    def test_get_commands_registry_multiple_same_file(self):
         """Verify that a single file can contain multiple command workers and their subcommands."""
-        with dynamic_entrypoint("nautobot.workers", name="grafana", module="nautobot_chatops_grafana.worker"):
-            registry = get_commands_registry()
-            print(registry)
+        with dynamic_entrypoint(
+            "nautobot.workers", name="first_command", module="nautobot_chatops.tests.workers.two_commands"
+        ):
+            with dynamic_entrypoint(
+                "nautobot.workers", name="second_command", module="nautobot_chatops.tests.workers.two_commands"
+            ):
+                registry = get_commands_registry()
 
-            # Make sure both commands and both subcommands were loaded
+                # Make sure both commands and both subcommands were loaded
 
-            self.assertIn("first_command", registry)
-            self.assertIn("function", registry["first_command"])
-            self.assertTrue(callable(registry["first_command"]["function"]))
-            self.assertIn("subcommands", registry["first_command"])
-            self.assertIn("first-subcommand", registry["first_command"]["subcommands"])
-            self.assertIn("worker", registry["first_command"]["subcommands"]["first-subcommand"])
-            self.assertTrue(callable(registry["first_command"]["subcommands"]["first-subcommand"]["worker"]))
+                self.assertIn("first_command", registry)
+                self.assertIn("function", registry["first_command"])
+                self.assertTrue(callable(registry["first_command"]["function"]))
+                self.assertIn("subcommands", registry["first_command"])
+                self.assertIn("first-subcommand", registry["first_command"]["subcommands"])
+                self.assertIn("worker", registry["first_command"]["subcommands"]["first-subcommand"])
+                self.assertTrue(callable(registry["first_command"]["subcommands"]["first-subcommand"]["worker"]))
 
-            self.assertIn("second_command", registry)
-            self.assertIn("function", registry["second_command"])
-            self.assertTrue(callable(registry["second_command"]["function"]))
-            self.assertIn("subcommands", registry["second_command"])
-            self.assertIn("second-subcommand", registry["second_command"]["subcommands"])
-            self.assertIn("worker", registry["second_command"]["subcommands"]["second-subcommand"])
-            self.assertTrue(callable(registry["second_command"]["subcommands"]["second-subcommand"]["worker"]))
+                self.assertIn("second_command", registry)
+                self.assertIn("function", registry["second_command"])
+                self.assertTrue(callable(registry["second_command"]["function"]))
+                self.assertIn("subcommands", registry["second_command"])
+                self.assertIn("second-subcommand", registry["second_command"]["subcommands"])
+                self.assertIn("worker", registry["second_command"]["subcommands"]["second-subcommand"])
+                self.assertTrue(callable(registry["second_command"]["subcommands"]["second-subcommand"]["worker"]))
 
-    def test_grafana_get_commands_registry_dynamic_subcommands(self):
+    def test_get_commands_registry_dynamic_subcommands(self):
         """Verify Dynamic Commands."""
         with dynamic_entrypoint(
             "nautobot.workers", name="dynamic_command", module="nautobot_chatops.tests.workers.dynamic_commands"
@@ -111,6 +120,15 @@ class TestGrafana(TestCase):
                 self.assertIn("worker", registry["third_command"]["subcommands"]["third-subcommand"])
                 self.assertTrue(callable(registry["third_command"]["subcommands"]["third-subcommand"]["worker"]))
 
-                # Make sure the default netbox command is still loaded
+                # Make sure the default nautobot command is still loaded
 
-                self.assertIn("netbox", registry)
+                self.assertIn("nautobot", registry)
+
+    def test_grafana_commands_registry_dynamic_subcommands(self):
+        """Specific testing for the Grafana Chatops Plugin."""
+        with dynamic_entrypoint("nautobot.workers", name="grafana", module="nautobot_chatops_extension_grafana.worker"):
+            registry = get_commands_registry()
+
+            self.assertIn("grafana", registry)
+            self.assertIn("function", registry["grafana"])
+            self.assertTrue(callable(registry["grafana"]["function"]))
