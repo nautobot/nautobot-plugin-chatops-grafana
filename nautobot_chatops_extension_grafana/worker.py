@@ -4,6 +4,7 @@ import tempfile
 import argparse
 import os
 from datetime import datetime
+from isodate import ISO8601Error, parse_duration
 from jinja2 import Template
 from django.conf import settings
 from django_rq import job
@@ -101,24 +102,26 @@ def chat_parse_args(dispatcher, *args):
             break
 
     if not panel:
-        dispatcher.send_error("Command {current_subcommand} Not Found!")
+        dispatcher.send_error(f"Command {current_subcommand} Not Found!")
         return False
+
+    args = [f"--{arg}" for arg in args if not arg.startswith("--")]
 
     # Collect the arguments sent by the user parse them matching the panel config
     parser = argparse.ArgumentParser(description="Handles command arguments")
     predefined_args = {}
     for variable in panel.get("variables", []):
         if variable.get("includeincmd", True):
-            parser.add_argument(variable["name"], default=variable.get("response", ""), nargs="?")
+            parser.add_argument(f"--{variable['name']}", default=variable.get("response", ""), nargs="?")
         else:
             # The variable from the config wasn't included in the users response (hidden) so
             # ass the default response if provided in the config
             predefined_args[variable["name"]] = variable.get("response", "")
-    parser.add_argument("width", default=_GRAFANA_HANDLER.get_width(), nargs="?")
-    parser.add_argument("height", default=_GRAFANA_HANDLER.get_height(), nargs="?")
-    parser.add_argument("theme", default=_GRAFANA_HANDLER.get_theme(), nargs="?")
-    parser.add_argument("timespan", default=_GRAFANA_HANDLER.get_timespan(), nargs="?")
-    parser.add_argument("timezone", default=_GRAFANA_HANDLER.get_timezone(), nargs="?")
+    parser.add_argument("--width", default=_GRAFANA_HANDLER.get_width(), nargs="?")
+    parser.add_argument("--height", default=_GRAFANA_HANDLER.get_height(), nargs="?")
+    parser.add_argument("--theme", default=_GRAFANA_HANDLER.get_theme(), nargs="?")
+    parser.add_argument("--timespan", default=_GRAFANA_HANDLER.get_timespan(), nargs="?")
+    parser.add_argument("--timezone", default=_GRAFANA_HANDLER.get_timezone(), nargs="?")
     args_namespace = parser.parse_args(args)
     parsed_args = {**vars(args_namespace), **predefined_args}
     return panel, parsed_args, dashboard_slug
@@ -162,7 +165,14 @@ def chat_validate_args(dispatcher, panel, parsed_args, *args):  # pylint: disabl
         _GRAFANA_HANDLER.set_timespan(parsed_args["timespan"])
     except ValidationError:
         dispatcher.send_error(
-            f"{parsed_args['theme']} Is an invalid timespan, please see https://en.wikipedia.org/wiki/ISO_8601#Durations for more information"
+            f"{parsed_args['timespan']} Is an invalid timedelta, "
+            f"please see https://en.wikipedia.org/wiki/ISO_8601#Durations for more information"
+        )
+        return False
+    except ISO8601Error:
+        dispatcher.send_error(
+            f"{parsed_args['timespan']} Is an invalid timespan (e.g. 'P12M' for the past 12 months), "
+            f"please see https://en.wikipedia.org/wiki/ISO_8601#Durations for more information"
         )
         return False
 
@@ -188,32 +198,41 @@ def chat_return_panel(dispatcher, panel, parsed_args, dashboard_slug):
     dispatcher.send_busy_indicator()
 
     raw_png = _GRAFANA_HANDLER.get_png(dashboard_slug, panel)
-    if raw_png:
-        chat_header_args = []
-        for variable in panel.get("variables", []):
-            if variable.get("includeincmd", True):
-                chat_header_args += [
-                    (variable.get("friendly_name", variable["name"]), str(parsed_args[variable["name"]]))
-                ]
-        dispatcher.send_blocks(
-            dispatcher.command_response_header(
-                "grafana",
-                current_subcommand,
-                chat_header_args[:5],
-                panel["friendly_name"],
-                grafana_logo(dispatcher),
-            )
+    if not raw_png:
+        dispatcher.send_error("An error occurred while accessing Grafana")
+        return False
+
+    chat_header_args = []
+    for variable in panel.get("variables", []):
+        if variable.get("includeincmd", True):
+            chat_header_args += [(variable.get("friendly_name", variable["name"]), str(parsed_args[variable["name"]]))]
+    dispatcher.send_blocks(
+        dispatcher.command_response_header(
+            "grafana",
+            current_subcommand,
+            chat_header_args[:5],
+            panel["friendly_name"],
+            grafana_logo(dispatcher),
         )
-        with tempfile.TemporaryDirectory() as tempdir:
-            # Note: Microsoft Teams will silently fail if we have ":" in our filename.
-            timestamp = datetime.now().strftime("%Y-%m-%d-%H-%M-%S")
-            img_path = os.path.join(tempdir, f"{current_subcommand}_{timestamp}.png")
-            with open(img_path, "wb") as img_file:
-                img_file.write(raw_png)
-            dispatcher.send_image(img_path)
-        return True
-    dispatcher.send_error("An error occurred while accessing Grafana")
-    return False
+    )
+
+    with tempfile.TemporaryDirectory() as tempdir:
+        # Note: Microsoft Teams will silently fail if we have ":" in our filename.
+        now = datetime.now()
+        time_str = now.strftime("%Y-%m-%d-%H-%M-%S")
+
+        # If a timespan is specified, set the filename of the image to be the correct timespan displayed in the
+        # Grafana image.
+        if parsed_args.get("timespan"):
+            timedelta = parse_duration(parsed_args.get("timespan")).totimedelta(start=now)
+            from_ts = (now - timedelta).strftime("%Y-%m-%d-%H-%M-%S")
+            time_str = f"{from_ts}-to-{time_str}"
+
+        img_path = os.path.join(tempdir, f"{current_subcommand}_{time_str}.png")
+        with open(img_path, "wb") as img_file:
+            img_file.write(raw_png)
+        dispatcher.send_image(img_path)
+    return True
 
 
 def chat_validate_nautobot_args(  # pylint: disable=too-many-locals
@@ -231,17 +250,20 @@ def chat_validate_nautobot_args(  # pylint: disable=too-many-locals
             except Exception as err:  # pylint: disable=broad-except
                 logger.error("Unable to find class %s in dcim.models: %s", variable["query"], err)
                 dispatcher.send_error(
-                    f"Sorry, {dispatcher.user_mention()} there was an error with your panel definition, I was unable to find class {variable['query']} in dcim.models"
+                    f"Sorry, {dispatcher.user_mention()} there was an error with your panel definition, "
+                    f"I was unable to find class {variable['query']} in dcim.models"
                 )
                 return False
             if not variable.get("modelattr", False):
                 dispatcher.send_error(
-                    f"Sorry, {dispatcher.user_mention()} there was an error with your panel definition, When specifying a query, a modelattr is also required"
+                    f"Sorry, {dispatcher.user_mention()} there was an error with your panel definition, "
+                    f"When specifying a query, a modelattr is also required"
                 )
                 return False
             if objects.count() < 1:
                 dispatcher.send_error(
-                    f"Sorry, {dispatcher.user_mention()}, your query for {variable['query']} returned {objects.count()}."
+                    f"Sorry, {dispatcher.user_mention()}, your query for"
+                    f" {variable['query']} returned {objects.count()}."
                 )
                 return False
 
@@ -251,28 +273,31 @@ def chat_validate_nautobot_args(  # pylint: disable=too-many-locals
                 object_filter[variable["modelattr"]] = parsed_args[variable["name"]]
 
             # Parse Jinja in filter
-            for filterkey in object_filter.keys():
-                template = Template(object_filter[filterkey])
-                object_filter[filterkey] = template.render(validated_variables)
+            for filter_key in object_filter.keys():
+                template = Template(object_filter[filter_key])
+                object_filter[filter_key] = template.render(validated_variables)
 
             try:
                 filtered_objects = objects.filter(**object_filter)
             except Exception:  # pylint: disable=broad-except
                 logger.error("Unable to filter %s by %s", variable["query"], object_filter)
                 dispatcher.send_error(
-                    f"Sorry, {dispatcher.user_mention()} there was an error with your panel definition, I was unable to filter {variable['query']} by {object_filter}"
+                    f"Sorry, {dispatcher.user_mention()} there was an error with your panel definition, "
+                    f"I was unable to filter {variable['query']} by {object_filter}"
                 )
                 return False
             if filtered_objects.count() != 1:
                 # dispatcher.send_error(
-                #     f"Sorry, {dispatcher.user_mention()}, your query for {variable['query']} filtering by {object_filter} returned {filtered_objects.count()} it must return exactly 1"
+                #     f"Sorry, {dispatcher.user_mention()}, your query for {variable['query']} "
+                #     f"filtering by {object_filter} returned {filtered_objects.count()} it must return exactly 1"
                 # )
                 if filtered_objects.count() > 1:
                     choices = [
-                        (f"{object.name}", getattr(object, variable["modelattr"])) for object in filtered_objects
+                        (f"{filtered_object.name}", getattr(filtered_object, variable["modelattr"]))
+                        for filtered_object in filtered_objects
                     ]
                 else:
-                    choices = [(f"{object.name}", getattr(object, variable["modelattr"])) for object in objects]
+                    choices = [(f"{obj.name}", getattr(obj, variable["modelattr"])) for obj in objects]
                 helper_text = (
                     f"{helper_prefix} Requires {variable['friendly_name']}"
                     if variable.get("friendly_name", False)

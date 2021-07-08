@@ -3,6 +3,7 @@ import datetime
 import logging
 import urllib.parse
 import requests
+import isodate
 import yaml
 
 from django.conf import settings
@@ -38,6 +39,7 @@ class GrafanaHandler:
     # TODO use Pydantic to define panels class
     panels = None
     current_subcommand = ""
+    now = datetime.datetime.utcnow()
 
     def __init__(self, config: GrafanaConfigSettings) -> None:
         """Initialize the class."""
@@ -132,7 +134,7 @@ class GrafanaHandler:
         )
         self.config = new_config
 
-    def set_timespan(self, new_timespan: datetime.timedelta):
+    def set_timespan(self, new_timespan: str):
         """Simple Set Timespan.  Must redefine the config model for pydantic to validate."""
         new_config = GrafanaConfigSettings(
             grafana_url=self.config.grafana_url,
@@ -140,7 +142,9 @@ class GrafanaHandler:
             default_width=self.config.default_width,
             default_height=self.config.default_height,
             default_theme=self.config.default_theme,
-            default_timespan=new_timespan,
+            default_timespan=new_timespan
+            if not new_timespan
+            else isodate.parse_duration(new_timespan).totimedelta(start=self.now),
             grafana_org_id=self.config.grafana_org_id,
             default_tz=self.config.default_tz,
             config_file=self.config.config_file,
@@ -170,7 +174,6 @@ class GrafanaHandler:
         """Using requests GET the generated URL and return the binary contents of the file."""
         url, payload = self.get_png_url(dashboard_slug, panel)
         headers = {"Authorization": f"Bearer {self.config.grafana_api_key}"}
-        results = None
         try:
             logger.debug("Begin GET %s", url)
             results = requests.get(url, headers=headers, stream=True, params=payload)
@@ -195,23 +198,21 @@ class GrafanaHandler:
             "tz": urllib.parse.quote(self.config.default_tz),
             "theme": self.config.default_theme,
         }
-        # timestamp_now = datetime.datetime.utcnow()
-        #
-        # from_time = str(int((timestamp_now - self.config.default_timespan).timestamp() * 1e3))
-        # to_time = str(int(timestamp_now.timestamp() * 1e3))
-        # if from_time != to_time:
-        #     payload['from'] = from_time
-        #     payload['to'] = to_time
-        # if self.config.default_width > 0:
-        #     payload['width'] = self.config.default_width
-        # if self.config.default_height > 0:
-        #     payload['height'] = self.config.default_height
+        from_time = str(int((self.now - self.config.default_timespan).timestamp() * 1e3))
+        to_time = str(int(self.now.timestamp() * 1e3))
+        if from_time != to_time:
+            payload["from"] = from_time
+            payload["to"] = to_time
+        if self.config.default_width > 0:
+            payload["width"] = self.config.default_width
+        if self.config.default_height > 0:
+            payload["height"] = self.config.default_height
+
         for variable in panel.get("variables", []):
             if variable.get("includeinurl", True):
                 payload[f"var-{variable['name']}"] = variable["value"]
         url = f"{self.config.grafana_url}/render/d-solo/{dashboard['dashboard_uid']}/{dashboard_slug}"
         logger.debug("URL: %s Payload: %s", url, payload)
-        print(url)
         return url, payload
 
     # def set_config_defaults(self):
