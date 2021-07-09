@@ -6,21 +6,17 @@ import os
 from datetime import datetime
 from isodate import ISO8601Error, parse_duration
 from jinja2 import Template
-from django.conf import settings
 from django_rq import job
 from pydantic.error_wrappers import ValidationError  # pylint: disable=no-name-in-module
 from nautobot.dcim import models
 from nautobot_chatops.workers import handle_subcommands, add_subcommand
-from .grafana import GrafanaHandler
+from .grafana import handler
 
 logger = logging.getLogger("nautobot.plugin.grafana")
 
 TIMEOUT = "60"
-PLUGIN_SETTINGS = settings.PLUGINS_CONFIG["nautobot_plugin_chatops_grafana"]
 GRAFANA_LOGO_PATH = "grafana/grafana_icon.png"
 GRAFANA_LOGO_ALT = "Grafana Logo"
-
-_GRAFANA_HANDLER = None
 
 
 def grafana_logo(dispatcher):
@@ -31,23 +27,20 @@ def grafana_logo(dispatcher):
 @job("default")
 def grafana(subcommand, **kwargs):
     """Pull Panels from Grafana."""
-    global _GRAFANA_HANDLER  # pylint: disable=global-statement
-    _GRAFANA_HANDLER = GrafanaHandler(PLUGIN_SETTINGS)
     initialize_subcommands()
-    _GRAFANA_HANDLER.set_current_subcommand(subcommand)
+    handler.set_current_subcommand(subcommand)
     return handle_subcommands("grafana", subcommand, **kwargs)
 
 
 def initialize_subcommands():
     """Based on the panels configuration yaml provided build chat subcommands."""
-    global _GRAFANA_HANDLER  # pylint: disable=global-statement
-    raw_panels = _GRAFANA_HANDLER.get_panels()
+    raw_panels = handler.get_panels()
     default_params = [
-        f"width={_GRAFANA_HANDLER.get_width()}",
-        f"height={_GRAFANA_HANDLER.get_height()}",
-        f"theme={_GRAFANA_HANDLER.get_theme()}",
-        f"timespan={_GRAFANA_HANDLER.get_timespan()}",
-        f"timezone={_GRAFANA_HANDLER.get_timezone()}",
+        f"width={handler.get_width()}",
+        f"height={handler.get_height()}",
+        f"theme={handler.get_theme()}",
+        f"timespan={handler.get_timespan()}",
+        f"timezone={handler.get_timezone()}",
     ]
     for dashboard in raw_panels["dashboards"]:
         for panel in dashboard["panels"]:
@@ -88,9 +81,8 @@ def chat_parse_args(dispatcher, *args):
         current_subcommand: str the name of the subcommane
         dashboard_slug: str the dashboard slug
     """
-    global _GRAFANA_HANDLER  # pylint: disable=global-statement
-    raw_panels = _GRAFANA_HANDLER.get_panels()
-    current_subcommand = _GRAFANA_HANDLER.get_current_subcommand()
+    raw_panels = handler.get_panels()
+    current_subcommand = handler.get_current_subcommand()
     dashboard_slug = None
     panel = None
 
@@ -117,11 +109,11 @@ def chat_parse_args(dispatcher, *args):
             # The variable from the config wasn't included in the users response (hidden) so
             # ass the default response if provided in the config
             predefined_args[variable["name"]] = variable.get("response", "")
-    parser.add_argument("--width", default=_GRAFANA_HANDLER.get_width(), nargs="?")
-    parser.add_argument("--height", default=_GRAFANA_HANDLER.get_height(), nargs="?")
-    parser.add_argument("--theme", default=_GRAFANA_HANDLER.get_theme(), nargs="?")
-    parser.add_argument("--timespan", default=_GRAFANA_HANDLER.get_timespan(), nargs="?")
-    parser.add_argument("--timezone", default=_GRAFANA_HANDLER.get_timezone(), nargs="?")
+    parser.add_argument("--width", default=handler.get_width(), nargs="?")
+    parser.add_argument("--height", default=handler.get_height(), nargs="?")
+    parser.add_argument("--theme", default=handler.get_theme(), nargs="?")
+    parser.add_argument("--timespan", default=handler.get_timespan(), nargs="?")
+    parser.add_argument("--timezone", default=handler.get_timezone(), nargs="?")
     args_namespace = parser.parse_args(args)
     parsed_args = {**vars(args_namespace), **predefined_args}
     return panel, parsed_args, dashboard_slug
@@ -129,8 +121,7 @@ def chat_parse_args(dispatcher, *args):
 
 def chat_validate_args(dispatcher, panel, parsed_args, *args):  # pylint: disable=too-many-return-statements
     """Validate all arguments from the chatbot."""
-    global _GRAFANA_HANDLER  # pylint: disable=global-statement
-    current_subcommand = _GRAFANA_HANDLER.get_current_subcommand()
+    current_subcommand = handler.get_current_subcommand()
 
     # Validate nautobot Args and get any missing parameters
     if not chat_validate_nautobot_args(
@@ -144,25 +135,25 @@ def chat_validate_args(dispatcher, panel, parsed_args, *args):  # pylint: disabl
 
     # Validate and set any additional args
     try:
-        _GRAFANA_HANDLER.set_width(parsed_args["width"])
+        handler.set_width(parsed_args["width"])
     except ValidationError:
         dispatcher.send_error(f"{parsed_args['width']} Is and invalid width please enter an integer.")
         return False
 
     try:
-        _GRAFANA_HANDLER.set_height(parsed_args["height"])
+        handler.set_height(parsed_args["height"])
     except ValidationError:
         dispatcher.send_error(f"{parsed_args['height']} Is an invalid height, please enter an integer.")
         return False
 
     try:
-        _GRAFANA_HANDLER.set_theme(parsed_args["theme"])
+        handler.set_theme(parsed_args["theme"])
     except ValidationError:
         dispatcher.send_error(f"{parsed_args['theme']} Is an invalid theme, please choose light or dark.")
         return False
 
     try:
-        _GRAFANA_HANDLER.set_timespan(parsed_args["timespan"])
+        handler.set_timespan(parsed_args["timespan"])
     except ValidationError:
         dispatcher.send_error(
             f"{parsed_args['timespan']} Is an invalid timedelta, "
@@ -177,7 +168,7 @@ def chat_validate_args(dispatcher, panel, parsed_args, *args):  # pylint: disabl
         return False
 
     try:
-        _GRAFANA_HANDLER.set_timezone(parsed_args["timezone"])
+        handler.set_timezone(parsed_args["timezone"])
     except ValidationError:
         dispatcher.send_error(f"{parsed_args['theme']} Is an invalid timezone.")
         return False
@@ -187,8 +178,7 @@ def chat_validate_args(dispatcher, panel, parsed_args, *args):  # pylint: disabl
 
 def chat_return_panel(dispatcher, panel, parsed_args, dashboard_slug):
     """After everything passes the tests decorate the response and return the panel to the user."""
-    global _GRAFANA_HANDLER  # pylint: disable=global-statement
-    current_subcommand = _GRAFANA_HANDLER.get_current_subcommand()
+    current_subcommand = handler.get_current_subcommand()
 
     dispatcher.send_markdown(
         f"Standby {dispatcher.user_mention()}, I'm getting that result.\n"
@@ -197,7 +187,7 @@ def chat_return_panel(dispatcher, panel, parsed_args, dashboard_slug):
     )
     dispatcher.send_busy_indicator()
 
-    raw_png = _GRAFANA_HANDLER.get_png(dashboard_slug, panel)
+    raw_png = handler.get_png(dashboard_slug, panel)
     if not raw_png:
         dispatcher.send_error("An error occurred while accessing Grafana")
         return False

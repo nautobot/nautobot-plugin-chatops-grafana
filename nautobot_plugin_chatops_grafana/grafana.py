@@ -41,7 +41,7 @@ class GrafanaHandler:
     current_subcommand = ""
     now = datetime.datetime.utcnow()
 
-    def __init__(self, config: GrafanaConfigSettings) -> None:
+    def __init__(self, config: dict) -> None:
         """Initialize the class."""
         self.config = GrafanaConfigSettings(**config)
         self.load_panels()
@@ -224,3 +224,6 @@ class GrafanaHandler:
     #     print("Not Implemented")
 
     # Settings should come from request, user, default
+
+
+handler = GrafanaHandler(PLUGIN_SETTINGS)

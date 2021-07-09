@@ -249,7 +249,7 @@ PLUGINS_CONFIG = {
         "default_timespan": "0",
         "grafana_org_id": 1,
         "default_tz": "America/Denver",
-        "config_file": "/source/nautobot_plugin_chatops_grafana/panels.yml",
+        "config_file": os.environ.get("GRAFANA_PANELS_FILE", "/source/nautobot_plugin_chatops_grafana/panels.yml"),
     },
 }
 
