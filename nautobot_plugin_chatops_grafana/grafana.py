@@ -15,7 +15,8 @@ from nautobot_plugin_chatops_grafana.validator import validate
 
 
 PLUGIN_SETTINGS = settings.PLUGINS_CONFIG["nautobot_plugin_chatops_grafana"]
-logger = logging.getLogger("nautobot.plugin.grafana")
+SLASH_COMMAND = "grafana"
+LOGGER = logging.getLogger("nautobot.plugin.grafana")
 
 
 class GrafanaConfigSettings(BaseModel):  # pylint: disable=too-few-public-methods
@@ -36,10 +37,10 @@ class GrafanaHandler:
     """Handle Building Grafana Requests."""
 
     config: GrafanaConfigSettings = None
-    # TODO use Pydantic to define panels class
     panels = None
     current_subcommand = ""
     now = datetime.datetime.utcnow()
+    default_params = ("width", "height", "theme", "timespan", "timezone")
 
     def __init__(self, config: dict) -> None:
         """Initialize the class."""
@@ -53,43 +54,36 @@ class GrafanaHandler:
         if schema_errors:
             raise ValidationError(",".join(schema_errors))
 
-        try:
-            with open(self.config.config_file) as config_file:
-                # TODO validate yaml with schema
-                self.panels = yaml.safe_load(config_file)
-        # TODO Raise a better exception to be captured internally
-        except Exception as err:
-            raise Exception("Invalid YAML in package list: %s" % str(err))  # pylint: disable=raise-missing-from
+        with open(self.config.config_file) as config_file:
+            self.panels = yaml.safe_load(config_file)
 
-    def get_panels(self):
-        """Simple Get Panels."""
-        return self.panels
-
-    def get_width(self):
+    @property
+    def width(self):
         """Simple Get Width."""
         return self.config.default_width
 
-    def get_height(self):
+    @property
+    def height(self):
         """Simple Get Height."""
         return self.config.default_height
 
-    def get_theme(self):
+    @property
+    def theme(self):
         """Simple Get Theme."""
         return self.config.default_theme
 
-    def get_timespan(self):
+    @property
+    def timespan(self):
         """Simple Get Timespan."""
         return self.config.default_timespan
 
-    def get_timezone(self):
+    @property
+    def timezone(self):
         """Simple Get Timezone."""
         return self.config.default_tz
 
-    def get_current_subcommand(self):
-        """Simple Get Current Subcommand."""
-        return self.current_subcommand
-
-    def set_width(self, new_width: int):
+    @width.setter
+    def width(self, new_width: int):
         """Simple Set Width.  Must redefine the config model for pydantic to validate."""
         new_config = GrafanaConfigSettings(
             grafana_url=self.config.grafana_url,
@@ -104,7 +98,8 @@ class GrafanaHandler:
         )
         self.config = new_config
 
-    def set_height(self, new_height: int):
+    @height.setter
+    def height(self, new_height: int):
         """Simple Set Height.  Must redefine the config model for pydantic to validate."""
         new_config = GrafanaConfigSettings(
             grafana_url=self.config.grafana_url,
@@ -119,7 +114,8 @@ class GrafanaHandler:
         )
         self.config = new_config
 
-    def set_theme(self, new_theme: Literal["light", "dark"]):
+    @theme.setter
+    def theme(self, new_theme: Literal["light", "dark"]):
         """Simple Set Theme.  Must redefine the config model for pydantic to validate."""
         new_config = GrafanaConfigSettings(
             grafana_url=self.config.grafana_url,
@@ -134,7 +130,8 @@ class GrafanaHandler:
         )
         self.config = new_config
 
-    def set_timespan(self, new_timespan: str):
+    @timespan.setter
+    def timespan(self, new_timespan: str):
         """Simple Set Timespan.  Must redefine the config model for pydantic to validate."""
         new_config = GrafanaConfigSettings(
             grafana_url=self.config.grafana_url,
@@ -151,7 +148,8 @@ class GrafanaHandler:
         )
         self.config = new_config
 
-    def set_timezone(self, new_timezone: str):
+    @timezone.setter
+    def timezone(self, new_timezone: str):
         """Simple Set Timezone.  Must redefine the config model for pydantic to validate."""
         new_config = GrafanaConfigSettings(
             grafana_url=self.config.grafana_url,
@@ -166,26 +164,23 @@ class GrafanaHandler:
         )
         self.config = new_config
 
-    def set_current_subcommand(self, new_subcommand: str):
-        """Simple setter method."""
-        self.current_subcommand = new_subcommand
-
     def get_png(self, dashboard_slug: str, panel: dict):
         """Using requests GET the generated URL and return the binary contents of the file."""
         url, payload = self.get_png_url(dashboard_slug, panel)
+        print(url)
         headers = {"Authorization": f"Bearer {self.config.grafana_api_key}"}
         try:
-            logger.debug("Begin GET %s", url)
+            LOGGER.debug("Begin GET %s", url)
             results = requests.get(url, headers=headers, stream=True, params=payload)
         except RequestException as err:
-            logger.error("An error occurred while accessing the url: %s Exception: %s", url, err)
+            LOGGER.error("An error occurred while accessing the url: %s Exception: %s", url, err)
             return None
 
         if results.status_code == 200:
-            logger.debug("Request returned %s", results.status_code)
+            LOGGER.debug("Request returned %s", results.status_code)
             return results.content
 
-        logger.error("Request returned %s for %s", results.status_code, url)
+        LOGGER.error("Request returned %s for %s", results.status_code, url)
         return None
 
     # TODO: Build Grafana URL from jinja template?
@@ -209,21 +204,11 @@ class GrafanaHandler:
             payload["height"] = self.config.default_height
 
         for variable in panel.get("variables", []):
-            if variable.get("includeinurl", True):
+            if variable.get("includeinurl", True) and variable.get("value"):
                 payload[f"var-{variable['name']}"] = variable["value"]
         url = f"{self.config.grafana_url}/render/d-solo/{dashboard['dashboard_uid']}/{dashboard_slug}"
-        logger.debug("URL: %s Payload: %s", url, payload)
+        LOGGER.debug("URL: %s Payload: %s", url, payload)
         return url, payload
-
-    # def set_config_defaults(self):
-    #     """Should set the user config."""
-    #     print("Not Implemented")
-
-    # def get_config_defaults(self):
-    #     """Should get config from configuration.py/panels.yml/user_settings."""
-    #     print("Not Implemented")
-
-    # Settings should come from request, user, default
 
 
 handler = GrafanaHandler(PLUGIN_SETTINGS)
