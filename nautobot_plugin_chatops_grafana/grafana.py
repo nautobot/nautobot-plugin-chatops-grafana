@@ -2,6 +2,7 @@
 import datetime
 import logging
 import urllib.parse
+from typing import Union, Tuple
 import requests
 import isodate
 import yaml
@@ -13,10 +14,13 @@ from requests.exceptions import RequestException
 from typing_extensions import Literal
 from nautobot_plugin_chatops_grafana.validator import validate
 
-
-PLUGIN_SETTINGS = settings.PLUGINS_CONFIG["nautobot_plugin_chatops_grafana"]
-SLASH_COMMAND = "grafana"
 LOGGER = logging.getLogger("nautobot.plugin.grafana")
+PLUGIN_SETTINGS = settings.PLUGINS_CONFIG["nautobot_plugin_chatops_grafana"]
+
+SLASH_COMMAND = "grafana"
+GRAFANA_LOGO_PATH = "grafana/grafana_icon.png"
+GRAFANA_LOGO_ALT = "Grafana Logo"
+REQUEST_TIMEOUT_SEC = 60
 
 
 class GrafanaConfigSettings(BaseModel):  # pylint: disable=too-few-public-methods
@@ -164,16 +168,23 @@ class GrafanaHandler:
         )
         self.config = new_config
 
-    def get_png(self, dashboard_slug: str, panel: dict):
-        """Using requests GET the generated URL and return the binary contents of the file."""
+    def get_png(self, dashboard_slug: str, panel: dict) -> Union[bytes, None]:
+        """Using requests GET the generated URL and return the binary contents of the file.
+
+        Args:
+            dashboard_slug (str): Grafana unique definition for a dashboard.
+            panel (dict): Parsed panel items for this dashboard from panels.yml.
+
+        Returns:
+            Union[bytes, None]: The raw image from the renderer or None if there was an error.
+        """
         url, payload = self.get_png_url(dashboard_slug, panel)
-        print(url)
         headers = {"Authorization": f"Bearer {self.config.grafana_api_key}"}
         try:
             LOGGER.debug("Begin GET %s", url)
-            results = requests.get(url, headers=headers, stream=True, params=payload)
-        except RequestException as err:
-            LOGGER.error("An error occurred while accessing the url: %s Exception: %s", url, err)
+            results = requests.get(url, headers=headers, stream=True, params=payload, timeout=REQUEST_TIMEOUT_SEC)
+        except RequestException as exc:
+            LOGGER.error("An error occurred while accessing the url: %s Exception: %s", url, exc)
             return None
 
         if results.status_code == 200:
@@ -183,9 +194,16 @@ class GrafanaHandler:
         LOGGER.error("Request returned %s for %s", results.status_code, url)
         return None
 
-    # TODO: Build Grafana URL from jinja template?
-    def get_png_url(self, dashboard_slug: str, panel: dict):
-        """Generate the URL and the Payload for the request."""
+    def get_png_url(self, dashboard_slug: str, panel: dict) -> Tuple[str, dict]:
+        """Generate the URL and the Payload for the request.
+
+        Args:
+            dashboard_slug (str): Grafana unique definition for a dashboard.
+            panel (dict): Parsed panel items for this dashboard from panels.yml.
+
+        Returns:
+            Tuple[str, dict]: Grafana url and payload to send to the grafana renderer.
+        """
         dashboard = next((i for i in self.panels["dashboards"] if i["dashboard_slug"] == dashboard_slug), None)
         payload = {
             "orgId": self.config.grafana_org_id,

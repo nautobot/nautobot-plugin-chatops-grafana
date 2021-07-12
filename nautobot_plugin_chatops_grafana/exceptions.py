@@ -21,7 +21,7 @@ class DefaultArgsError(BaseException):
                 f"See https://en.wikipedia.org/wiki/ISO_8601#Durations for more information."
             )
         else:
-            self.message = str(err)
+            self.message = f"{element} is invalid. {str(err)}"
 
     def __str__(self):
         """String representation of the error message."""
