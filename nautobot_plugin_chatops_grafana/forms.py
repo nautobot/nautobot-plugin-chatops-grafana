@@ -10,13 +10,14 @@ class DashboardsForm(BootstrapMixin, ModelForm):
 
     dashboard_slug = CharField(max_length=64)
     dashboard_uid = CharField(max_length=64)
+    friendly_name = CharField(max_length=255)
 
     class Meta:
         """Metaclass attributes of Dashboard."""
 
         model = Dashboard
 
-        fields = ("dashboard_slug", "dashboard_uid")
+        fields = ("dashboard_slug", "dashboard_uid", "friendly_name")
 
 
 class PanelsForm(BootstrapMixin, ModelForm):
@@ -40,14 +41,14 @@ class PanelVariablesForm(BootstrapMixin, ModelForm):
 
     panel = ModelChoiceField(queryset=Panel.objects.all())
     name = CharField(max_length=32)
-    friendly_name = CharField(max_length=64)
-    query = CharField(max_length=64)
+    friendly_name = CharField(max_length=64, required=False)
+    query = CharField(max_length=64, required=False)
     includeincmd = BooleanField()
     includeinurl = BooleanField()
-    modelattr = CharField(max_length=64)
-    value = CharField(max_length=64)
-    response = CharField(max_length=255)
-    filter = JSONField()
+    modelattr = CharField(max_length=64, required=False)
+    value = CharField(max_length=64, required=False)
+    response = CharField(max_length=255, required=False)
+    filter = JSONField(required=False)
 
     class Meta:
         """Metaclass attributes of Panel Variable."""

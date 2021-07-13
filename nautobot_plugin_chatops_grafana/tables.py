@@ -36,7 +36,7 @@ class DashboardViewTable(BaseTable):
         """Meta for class DashboardViewTable."""
 
         model = Dashboard
-        fields = ("dashboard_slug", "dashboard_uid", "actions")
+        fields = ("dashboard_slug", "dashboard_uid", "friendly_name", "actions")
 
 
 class PanelViewTable(BaseTable):
@@ -48,11 +48,16 @@ class PanelViewTable(BaseTable):
         verbose_name="",
     )
 
+    chat_command = TemplateColumn(
+        template_code="<span class='text-muted'><i>/grafana get-{{ record.command_name }}</i></span>",
+        verbose_name="Chat Command",
+    )
+
     class Meta(BaseTable.Meta):  # pylint: disable=too-few-public-methods
         """Meta for class PanelViewTable."""
 
         model = Panel
-        fields = ("command_name", "friendly_name", "panel_id", "dashboard", "actions")
+        fields = ("chat_command", "command_name", "friendly_name", "panel_id", "dashboard", "actions")
 
 
 class PanelVariableViewTable(BaseTable):

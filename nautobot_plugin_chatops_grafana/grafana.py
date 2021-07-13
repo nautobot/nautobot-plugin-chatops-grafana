@@ -2,18 +2,15 @@
 import datetime
 import logging
 import urllib.parse
-from typing import Union, Tuple
+from typing import Union, Tuple, List
 import requests
 import isodate
-import yaml
 
 from django.conf import settings
-from jsonschema import ValidationError
 from pydantic import BaseModel, FilePath  # pylint: disable=no-name-in-module
 from requests.exceptions import RequestException
 from typing_extensions import Literal
-from nautobot_plugin_chatops_grafana.validator import validate
-from nautobot_plugin_chatops_grafana.models import Panel
+from nautobot_plugin_chatops_grafana.models import Panel, PanelVariable
 
 LOGGER = logging.getLogger("nautobot.plugin.grafana")
 PLUGIN_SETTINGS = settings.PLUGINS_CONFIG["nautobot_plugin_chatops_grafana"]
@@ -54,13 +51,7 @@ class GrafanaHandler:
 
     def load_panels(self):
         """This method loads the yaml configuration file, and validates the schema."""
-        # Validate the YAML configuration files.
-        schema_errors = validate()
-        if schema_errors:
-            raise ValidationError(",".join(schema_errors))
-
-        with open(self.config.config_file) as config_file:
-            self.panels = yaml.safe_load(config_file)
+        self.panels = Panel.objects.all()
 
     @property
     def width(self):
@@ -169,17 +160,17 @@ class GrafanaHandler:
         )
         self.config = new_config
 
-    def get_png(self, dashboard_slug: str, panel: dict) -> Union[bytes, None]:
+    def get_png(self, panel: Panel, panel_vars: List[PanelVariable]) -> Union[bytes, None]:
         """Using requests GET the generated URL and return the binary contents of the file.
 
         Args:
-            dashboard_slug (str): Grafana unique definition for a dashboard.
-            panel (dict): Parsed panel items for this dashboard from panels.yml.
+            panel (nautobot_plugin_chatops_grafana.models.Panel): The Panel object.
+            panel_vars (List[nautobot_plugin_chatops_grafana.models.PanelVariable]): List of PanelVariable objects.
 
         Returns:
             Union[bytes, None]: The raw image from the renderer or None if there was an error.
         """
-        url, payload = self.get_png_url(dashboard_slug, panel)
+        url, payload = self.get_png_url(panel, panel_vars)
         headers = {"Authorization": f"Bearer {self.config.grafana_api_key}"}
         try:
             LOGGER.debug("Begin GET %s", url)
@@ -195,20 +186,19 @@ class GrafanaHandler:
         LOGGER.error("Request returned %s for %s", results.status_code, url)
         return None
 
-    def get_png_url(self, dashboard_slug: str, panel: dict) -> Tuple[str, dict]:
+    def get_png_url(self, panel: Panel, panel_vars: List[PanelVariable]) -> Tuple[str, dict]:
         """Generate the URL and the Payload for the request.
 
         Args:
-            dashboard_slug (str): Grafana unique definition for a dashboard.
-            panel (dict): Parsed panel items for this dashboard from panels.yml.
+            panel (nautobot_plugin_chatops_grafana.models.Panel): The Panel object.
+            panel_vars (List[nautobot_plugin_chatops_grafana.models.PanelVariable]): List of PanelVariable objects.
 
         Returns:
             Tuple[str, dict]: Grafana url and payload to send to the grafana renderer.
         """
-        dashboard = next((i for i in self.panels["dashboards"] if i["dashboard_slug"] == dashboard_slug), None)
         payload = {
             "orgId": self.config.grafana_org_id,
-            "panelId": panel["panel_id"],
+            "panelId": panel.panel_id,
             "tz": urllib.parse.quote(self.config.default_tz),
             "theme": self.config.default_theme,
         }
@@ -222,12 +212,41 @@ class GrafanaHandler:
         if self.config.default_height > 0:
             payload["height"] = self.config.default_height
 
-        for variable in panel.get("variables", []):
-            if variable.get("includeinurl", True) and variable.get("value"):
-                payload[f"var-{variable['name']}"] = variable["value"]
-        url = f"{self.config.grafana_url}/render/d-solo/{dashboard['dashboard_uid']}/{dashboard_slug}"
+        for variable in panel_vars:
+            if variable.includeinurl and variable.value:
+                payload[f"var-{variable.name}"] = variable.value
+        url = (
+            f"{self.config.grafana_url}/render/d-solo/{panel.dashboard.dashboard_uid}/{panel.dashboard.dashboard_slug}"
+        )
         LOGGER.debug("URL: %s Payload: %s", url, payload)
         return url, payload
+
+    def get_dashboards(self) -> List[dict]:
+        """get_dashboards will fetch the active dashboards from the grafana API.
+
+        Returns:
+            List[dict]: A list of the grafana dashboards.
+        """
+        headers = {"Authorization": f"Bearer {self.config.grafana_api_key}"}
+        url = f"{self.config.grafana_url}/api/search"
+        try:
+            LOGGER.debug("Begin GET /api/search")
+            results = requests.get(
+                url=url,
+                headers=headers,
+                params={"type": "dash-db"},
+                timeout=REQUEST_TIMEOUT_SEC,
+            )
+        except RequestException as exc:
+            LOGGER.error("An error occurred while accessing the url: %s Exception: %s", url, exc)
+            return []
+
+        if results.status_code == 200:
+            LOGGER.debug("Request returned %s", results.status_code)
+            return results.json()
+
+        LOGGER.error("Request returned %s for %s", results.status_code, url)
+        return []
 
 
 handler = GrafanaHandler(PLUGIN_SETTINGS)

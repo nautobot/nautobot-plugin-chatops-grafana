@@ -18,9 +18,10 @@ class Dashboard(PrimaryModel):
     """Model for dashboards."""
 
     dashboard_slug = models.CharField(max_length=255, unique=True, blank=False)
+    friendly_name = models.CharField(max_length=255, default="", blank=True)
     dashboard_uid = models.CharField(max_length=64, unique=True, blank=False)
 
-    csv_headers = ["slug", "uid"]
+    csv_headers = ["slug", "uid", "friendly_name"]
 
     class Meta:
         """Metadata for the model."""
@@ -33,7 +34,7 @@ class Dashboard(PrimaryModel):
 
     def to_csv(self):
         """Return fields for bulk view."""
-        return self.dashboard_slug, self.dashboard_uid
+        return self.dashboard_slug, self.dashboard_uid, self.friendly_name
 
 
 @extras_features(
@@ -61,7 +62,7 @@ class Panel(OrganizationalModel):
 
     def __str__(self):
         """String value for HTML rendering."""
-        return f"/grafana {self.command_name}"
+        return f"{self.command_name}"
 
     def to_csv(self):
         """Return fields for bulk view."""
@@ -82,7 +83,7 @@ class PanelVariable(OrganizationalModel):
     panel = models.ForeignKey(Panel, on_delete=models.CASCADE)
     name = models.CharField(max_length=32, blank=False)
     friendly_name = models.CharField(max_length=64, default="")
-    query = models.CharField(max_length=64, blank=False)
+    query = models.CharField(max_length=64, default="")
     includeincmd = models.BooleanField(default=False)
     includeinurl = models.BooleanField(default=True)
     modelattr = models.CharField(max_length=64, default="")

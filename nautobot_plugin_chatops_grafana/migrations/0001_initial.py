@@ -24,6 +24,7 @@ class Migration(migrations.Migration):
                 ),
                 ("dashboard_slug", models.CharField(max_length=255)),
                 ("dashboard_uid", models.CharField(max_length=64)),
+                ("friendly_name", models.CharField(max_length=255, blank=True)),
             ],
             options={
                 "ordering": ["dashboard_slug"],

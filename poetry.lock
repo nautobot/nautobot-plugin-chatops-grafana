@@ -213,6 +213,19 @@ optional = false
 python-versions = ">=2.7, !=3.0.*, !=3.1.*, !=3.2.*, !=3.3.*, !=3.4.*"
 
 [[package]]
+name = "diffsync"
+version = "1.3.0"
+description = "Library to easily sync/diff/update 2 different data sources"
+category = "main"
+optional = false
+python-versions = ">=3.6,<4.0"
+
+[package.dependencies]
+colorama = ">=0.4.3,<0.5.0"
+pydantic = ">=1.7.2,<2.0.0"
+structlog = ">=20.1.0,<21.0.0"
+
+[[package]]
 name = "django"
 version = "3.1.13"
 description = "A high-level Python Web framework that encourages rapid development and clean, pragmatic design."
@@ -1458,6 +1471,22 @@ optional = false
 python-versions = "*"
 
 [[package]]
+name = "structlog"
+version = "20.2.0"
+description = "Structured Logging for Python"
+category = "main"
+optional = false
+python-versions = ">=3.6"
+
+[package.dependencies]
+typing-extensions = {version = "*", markers = "python_version < \"3.8\""}
+
+[package.extras]
+dev = ["coverage", "freezegun (>=0.2.8)", "pretend", "pytest-asyncio", "pytest-randomly", "pytest (>=6.0)", "simplejson", "furo", "sphinx", "sphinx-toolbox", "twisted", "pre-commit"]
+docs = ["furo", "sphinx", "sphinx-toolbox", "twisted"]
+tests = ["coverage", "freezegun (>=0.2.8)", "pretend", "pytest-asyncio", "pytest-randomly", "pytest (>=6.0)", "simplejson"]
+
+[[package]]
 name = "svgwrite"
 version = "1.4.1"
 description = "A Python library to create SVG drawings."
@@ -1623,7 +1652,7 @@ nautobot = ["nautobot"]
 [metadata]
 lock-version = "1.1"
 python-versions = "^3.7"
-content-hash = "4e16bfddce3f65fc31b3681d8bf16cc71a6c76fad3c432b5b065fad7ebe02624"
+content-hash = "5e74b2af32f25d4ba2508ad832469d5d51f9cd05a5f913d90f105229c5048d8d"
 
 [metadata.files]
 aniso8601 = [
@@ -1804,6 +1833,10 @@ cryptography = [
 defusedxml = [
     {file = "defusedxml-0.7.1-py2.py3-none-any.whl", hash = "sha256:a352e7e428770286cc899e2542b6cdaedb2b4953ff269a210103ec58f6198a61"},
     {file = "defusedxml-0.7.1.tar.gz", hash = "sha256:1bb3032db185915b62d7c6209c5a8792be6a32ab2fedacc84e01b52c51aa3e69"},
+]
+diffsync = [
+    {file = "diffsync-1.3.0-py3-none-any.whl", hash = "sha256:c23bac1080ea7205272bacb4ae4659a23a96172a28024febe162a5559e178d0b"},
+    {file = "diffsync-1.3.0.tar.gz", hash = "sha256:ab5499293e307f872056a757bea22e0c88ec91e88dfdba4d6bdc59832835b2af"},
 ]
 django = [
     {file = "Django-3.1.13-py3-none-any.whl", hash = "sha256:a6e0d1ff11095b7394c079ade7094c73b2dc3df4a7a373c9b58ed73b77a97feb"},
@@ -2491,6 +2524,10 @@ stevedore = [
 ]
 strict-rfc3339 = [
     {file = "strict-rfc3339-0.7.tar.gz", hash = "sha256:5cad17bedfc3af57b399db0fed32771f18fc54bbd917e85546088607ac5e1277"},
+]
+structlog = [
+    {file = "structlog-20.2.0-py2.py3-none-any.whl", hash = "sha256:33dd6bd5f49355e52c1c61bb6a4f20d0b48ce0328cc4a45fe872d38b97a05ccd"},
+    {file = "structlog-20.2.0.tar.gz", hash = "sha256:af79dfa547d104af8d60f86eac12fb54825f54a46bc998e4504ef66177103174"},
 ]
 svgwrite = [
     {file = "svgwrite-1.4.1-py3-none-any.whl", hash = "sha256:4b21652a1d9c543a6bf4f9f2a54146b214519b7540ca60cb99968ad09ef631d0"},
