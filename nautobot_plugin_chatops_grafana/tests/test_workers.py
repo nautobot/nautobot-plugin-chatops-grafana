@@ -1,14 +1,16 @@
 """Test cases for the Nautobot workers module."""
-from django.test import SimpleTestCase
+from django.test import TestCase
 
 from prybar import dynamic_entrypoint
 
 from nautobot_chatops.workers import parse_command_string, get_commands_registry, add_subcommand
 from nautobot_chatops.tests.workers.dynamic_commands import dynamic_command, dynamic_subcommand
 import nautobot_chatops.workers
+from nautobot_plugin_chatops_grafana.worker import initialize_subcommands
+from nautobot_plugin_chatops_grafana.models import Panel, Dashboard
 
 
-class TestGrafana(SimpleTestCase):
+class TestGrafana(TestCase):
     """Test the generic functions provided by nautobot_chatops.workers."""
 
     def setUp(self):
@@ -16,6 +18,20 @@ class TestGrafana(SimpleTestCase):
         # Due to testing with multiple entry points with multiple tests we must reinitialize
         # the command registry.  This will produce warnings but will not happen in production.
         nautobot_chatops.workers._registry_initialized = False  # pylint: disable=protected-access
+
+        # Create a mock dashboard in the test database so we can test command generation.
+        test_dashboard = Dashboard.objects.create(
+            dashboard_slug="test-dashboard", dashboard_uid="7Wkldj8Q", friendly_name="Test Dashboard"
+        )
+
+        # Generate a few commands (panels) to populate the test database with some slash commands.
+        for i in range(0, 5):
+            Panel.objects.create(
+                dashboard=test_dashboard,
+                command_name=f"test-command-{i}",
+                friendly_name=f"Test Command {i}",
+                panel_id=i,
+            )
 
     def test_parse_command_string(self):
         """Verify that various inputs to parse_command_string() are handled correctly."""
@@ -129,6 +145,18 @@ class TestGrafana(SimpleTestCase):
         with dynamic_entrypoint("nautobot.workers", name="grafana", module="nautobot_plugin_chatops_grafana.worker"):
             registry = get_commands_registry()
 
+            # Populate the command registry with the dynamic Grafana commands.
+            initialize_subcommands()
+
             self.assertIn("grafana", registry)
+
+            # Make sure there is a top-level callable function
             self.assertIn("function", registry["grafana"])
             self.assertTrue(callable(registry["grafana"]["function"]))
+
+            # Test that subcommands are being dynamically generated and have a callable function
+            self.assertIn("subcommands", registry["grafana"])
+            self.assertIn("get-test-command-1", registry["grafana"]["subcommands"])
+            self.assertIn("worker", registry["grafana"]["subcommands"]["get-test-command-1"])
+            self.assertIn("timespan", str(registry["grafana"]["subcommands"]["get-test-command-1"]["params"]))
+            self.assertTrue(callable(registry["grafana"]["subcommands"]["get-test-command-1"]["worker"]))
