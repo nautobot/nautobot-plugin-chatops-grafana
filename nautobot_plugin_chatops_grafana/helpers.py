@@ -7,6 +7,33 @@ from schema_enforcer.schemas.manager import SchemaManager
 from schema_enforcer.instances.file import InstanceFileManager
 from schema_enforcer.exceptions import InvalidJSONSchema
 
+SPECIAL_CHAR = {
+    "%": "percent",
+    "&": "and",
+    "@": "at",
+    "$": "dollar",
+    "<": "less-than",
+    ">": "greater-than",
+}
+
+
+def format_command(command: str) -> str:
+    """_format_command_name will format the panel titles into a valid slash command.
+
+    This function will remove spaces, non alpha-numerical characters, and attempt to replace some common
+    special characters with their word representation to maintain panel representation in the slash command.
+
+    Args:
+        command (str): Original command string
+    """
+    title_no_space = command.lower().replace(" ", "-")
+    for char, repl in SPECIAL_CHAR.items():
+        if char in title_no_space:
+            title_no_space = title_no_space.replace(char, repl)
+
+    command_name = "".join([val for val in title_no_space if val.isalnum() or val in ["-", "_"]])
+    return command_name.strip("-").strip("_")
+
 
 def validate(strict: bool = False) -> List[str]:
     """Validates instance files against defined schema.

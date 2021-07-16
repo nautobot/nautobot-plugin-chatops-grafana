@@ -7,9 +7,11 @@ from nautobot_plugin_chatops_grafana.views import (
     DashboardsCreate,
     DashboardsDelete,
     DashboardsEdit,
+    DashboardsSync,
     Panels,
     PanelsCreate,
     PanelsEdit,
+    PanelsSync,
     PanelsDelete,
     Variables,
     VariablesCreate,
@@ -27,6 +29,7 @@ urlpatterns = [
         kwargs={"model": Dashboard},
     ),
     path("dashboards/add/", DashboardsCreate.as_view(), name="dashboards_create"),
+    path("dashboards/sync/", DashboardsSync.as_view(), name="dashboards_sync"),
     path("dashboards/<uuid:pk>/edit/", DashboardsEdit.as_view(), name="dashboards_update"),
     path("dashboards/<uuid:pk>/delete/", DashboardsDelete.as_view(), name="dashboards_delete"),
     # Panel specific views.
@@ -38,6 +41,7 @@ urlpatterns = [
         kwargs={"model": Panel},
     ),
     path("panels/add/", PanelsCreate.as_view(), name="panels_create"),
+    path("panels/sync/", PanelsSync.as_view(), name="panels_sync"),
     path("panels/<uuid:pk>/edit/", PanelsEdit.as_view(), name="panels_update"),
     path("panels/<uuid:pk>/delete/", PanelsDelete.as_view(), name="panels_delete"),
     # Panel-variables specific views.

@@ -4,7 +4,7 @@ import yaml
 from termcolor import colored
 from django.core.management.base import BaseCommand
 from pydantic import ValidationError
-from nautobot_plugin_chatops_grafana.validator import validate
+from nautobot_plugin_chatops_grafana.helpers import validate
 from nautobot_plugin_chatops_grafana.models import Dashboard, Panel, PanelVariable
 
 

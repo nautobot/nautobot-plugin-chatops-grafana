@@ -12,6 +12,10 @@
             <a href="/plugins/nautobot-plugin-chatops-grafana/panels/add/" class="btn btn-primary">
                 <span class="mdi mdi-plus-thick" aria-hidden="true"></span> Add
             </a>
+            <a  href="{% url 'plugins:nautobot_plugin_chatops_grafana:panels_sync' %}"
+                class="btn btn-warning" title="Synchronize panels from Grafana">
+                <span class="mdi mdi-database-sync-outline"></span> Sync
+            </a>
         </div>
     </div>
 </div>

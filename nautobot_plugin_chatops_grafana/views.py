@@ -5,12 +5,16 @@ to send requests and notifications to.
 """
 
 from django.views import View
-from django.shortcuts import render
+from django.shortcuts import render, reverse, redirect
+from django.contrib import messages
 from django.contrib.auth.mixins import PermissionRequiredMixin
 from nautobot.core.views.generic import ObjectEditView, ObjectDeleteView
+from nautobot.utilities.forms import ConfirmationForm
+from nautobot_plugin_chatops_grafana.diffsync.sync import run_dashboard_sync, run_panels_sync
 from nautobot_plugin_chatops_grafana.tables import PanelViewTable, DashboardViewTable, PanelVariableViewTable
 from nautobot_plugin_chatops_grafana.models import Panel, Dashboard, PanelVariable
-from nautobot_plugin_chatops_grafana.forms import DashboardsForm, PanelsForm, PanelVariablesForm
+from nautobot_plugin_chatops_grafana.grafana import handler
+from nautobot_plugin_chatops_grafana.forms import DashboardsForm, PanelsForm, PanelsSyncForm, PanelVariablesForm
 
 
 class Dashboards(View):
@@ -46,6 +50,41 @@ class DashboardsEdit(DashboardsCreate):
     """View for editing an existing Dashboard."""
 
     permission_required = "nautobot_plugin_chatops_grafana.dashboards_update"
+
+
+class DashboardsSync(PermissionRequiredMixin, ObjectDeleteView):
+    """View for syncing Grafana Dashboards with the Grafana API."""
+
+    permission_required = "nautobot_plugin_chatops_grafana.dashboards_sync"
+    default_return_url = "plugins:nautobot_plugin_chatops_grafana:dashboards"
+
+    def get(self, request, **kwargs):
+        """Get request for the Dashboard Sync view."""
+        return render(
+            request,
+            "nautobot_plugin_chatops_grafana/sync_confirmation.html",
+            {
+                "form": ConfirmationForm(initial=request.GET),
+                "grafana_url": handler.config.grafana_url,
+                "return_url": reverse("plugins:nautobot_plugin_chatops_grafana:dashboards"),
+            },
+        )
+
+    def post(self, request, **kwargs):
+        """Post request for the Dashboard Sync view."""
+        form = ConfirmationForm(request.POST)
+
+        if not form.is_valid():
+            messages.error(request, "Form validation failed.")
+
+        else:
+            sync_data = run_dashboard_sync(request.POST.get("delete") == "true")
+            if not sync_data:
+                messages.info(request, "No diffs found for the Grafana Dashboards!")
+            else:
+                messages.success(request, "Grafana Dashboards synchronization complete!")
+
+        return redirect(reverse("plugins:nautobot_plugin_chatops_grafana:dashboards"))
 
 
 class DashboardsDelete(PermissionRequiredMixin, ObjectDeleteView):
@@ -88,6 +127,38 @@ class PanelsEdit(PanelsCreate):
     """View for editing an existing Panel."""
 
     permission_required = "nautobot_plugin_chatops_grafana.panels_update"
+
+
+class PanelsSync(PermissionRequiredMixin, ObjectEditView):
+    """View for synchronizing data between the Grafana Dashboard Panels and Nautobot."""
+
+    permission_required = "nautobot_plugin_chatops_grafana.panels_sync"
+    model = Panel
+    queryset = Panel.objects.all()
+    model_form = PanelsSyncForm
+    template_name = "nautobot_plugin_chatops_grafana/panels_sync.html"
+    default_return_url = "plugins:nautobot_plugin_chatops_grafana:panels"
+
+    def get_permission_required(self):
+        """Permissions over-rride for the Panels Sync view."""
+        return "nautobot_plugin_chatops_grafana.panels_sync"
+
+    def post(self, request, *args, **kwargs):
+        """Post request for the Panels Sync view."""
+        dashboard_pk = request.POST.get("dashboard")
+        if not dashboard_pk:
+            messages.error(request, "Unable to determine Grafana Dashboard!")
+            return redirect(reverse("plugins:nautobot_plugin_chatops_grafana:panels"))
+
+        dashboard = Dashboard.objects.get(pk=dashboard_pk)
+
+        sync_data = run_panels_sync(dashboard, request.POST.get("delete") == "true")
+        if not sync_data:
+            messages.info(request, "No diffs found for the Grafana Dashboards!")
+        else:
+            messages.success(request, "Grafana Dashboards synchronization complete!")
+
+        return redirect(reverse("plugins:nautobot_plugin_chatops_grafana:panels"))
 
 
 class PanelsDelete(PermissionRequiredMixin, ObjectDeleteView):

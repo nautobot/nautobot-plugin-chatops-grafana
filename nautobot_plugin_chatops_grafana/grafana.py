@@ -248,5 +248,40 @@ class GrafanaHandler:
         LOGGER.error("Request returned %s for %s", results.status_code, url)
         return []
 
+    def get_panels(self, dashboard_uid: str) -> List[dict]:
+        """get_panels will fetch the active panels for a given dashboard from the grafana API.
+
+        Returns:
+            List[dict]: A list of the grafana panels.
+        """
+        headers = {"Authorization": f"Bearer {self.config.grafana_api_key}"}
+        url = f"{self.config.grafana_url}/api/dashboards/uid/{dashboard_uid}"
+        try:
+            LOGGER.debug("Begin GET /api/dashboards/uid/")
+            results = requests.get(
+                url=url,
+                headers=headers,
+                timeout=REQUEST_TIMEOUT_SEC,
+            )
+        except RequestException as exc:
+            LOGGER.error("An error occurred while accessing the url: %s Exception: %s", url, exc)
+            return []
+
+        if results.status_code != 200:
+            LOGGER.error("Request returned %s for %s", results.status_code, url)
+            return []
+
+        LOGGER.debug("Request returned %s", results.status_code)
+        data = results.json()
+        if not data.get("dashboard"):
+            LOGGER.error("Response does not contain `dashboard` key.")
+            return []
+
+        if not data["dashboard"].get("panels"):
+            LOGGER.error("Response does not contain `dashboard.panels` key.")
+            return []
+
+        return data["dashboard"]["panels"]
+
 
 handler = GrafanaHandler(PLUGIN_SETTINGS)

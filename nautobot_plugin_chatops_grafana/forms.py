@@ -36,6 +36,19 @@ class PanelsForm(BootstrapMixin, ModelForm):
         fields = ("dashboard", "command_name", "friendly_name", "panel_id")
 
 
+class PanelsSyncForm(BootstrapMixin, ModelForm):
+    """Form for editing Panel instances."""
+
+    dashboard = ModelChoiceField(queryset=Dashboard.objects.all())
+
+    class Meta:
+        """Metaclass attributes of Panel."""
+
+        model = Panel
+
+        fields = ("dashboard",)
+
+
 class PanelVariablesForm(BootstrapMixin, ModelForm):
     """Form for editing Panel Variable instances."""
 

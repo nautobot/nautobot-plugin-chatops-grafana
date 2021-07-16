@@ -1,6 +1,6 @@
 """Nautobot Server CLI extension for Grafana ChatOps."""
 from django.core.management.base import BaseCommand
-from nautobot_plugin_chatops_grafana.validator import validate
+from nautobot_plugin_chatops_grafana.helpers import validate
 
 
 class Command(BaseCommand):
