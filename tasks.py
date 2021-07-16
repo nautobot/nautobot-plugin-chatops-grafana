@@ -428,8 +428,6 @@ def tests(context, failfast=False):
     if not is_truthy(context.nautobot_plugin_chatops_grafana.local):
         print("Starting Docker Containers...")
         start(context)
-    makemigrations(context)
-    migrate(context)
     # Sorted loosely from fastest to slowest
     print("Running black...")
     black(context)
