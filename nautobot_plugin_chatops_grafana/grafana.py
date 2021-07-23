@@ -7,7 +7,7 @@ import requests
 import isodate
 
 from django.conf import settings
-from pydantic import BaseModel, FilePath  # pylint: disable=no-name-in-module
+from pydantic import BaseModel  # pylint: disable=no-name-in-module
 from requests.exceptions import RequestException
 from typing_extensions import Literal
 from nautobot_plugin_chatops_grafana.models import Panel, PanelVariable
@@ -32,7 +32,6 @@ class GrafanaConfigSettings(BaseModel):  # pylint: disable=too-few-public-method
     default_timespan: datetime.timedelta
     grafana_org_id: int
     default_tz: str
-    config_file: FilePath
 
 
 class GrafanaHandler:
@@ -90,7 +89,6 @@ class GrafanaHandler:
             default_timespan=self.config.default_timespan,
             grafana_org_id=self.config.grafana_org_id,
             default_tz=self.config.default_tz,
-            config_file=self.config.config_file,
         )
         self.config = new_config
 
@@ -106,7 +104,6 @@ class GrafanaHandler:
             default_timespan=self.config.default_timespan,
             grafana_org_id=self.config.grafana_org_id,
             default_tz=self.config.default_tz,
-            config_file=self.config.config_file,
         )
         self.config = new_config
 
@@ -122,7 +119,6 @@ class GrafanaHandler:
             default_timespan=self.config.default_timespan,
             grafana_org_id=self.config.grafana_org_id,
             default_tz=self.config.default_tz,
-            config_file=self.config.config_file,
         )
         self.config = new_config
 
@@ -140,7 +136,6 @@ class GrafanaHandler:
             else isodate.parse_duration(new_timespan).totimedelta(start=self.now),
             grafana_org_id=self.config.grafana_org_id,
             default_tz=self.config.default_tz,
-            config_file=self.config.config_file,
         )
         self.config = new_config
 
@@ -156,7 +151,6 @@ class GrafanaHandler:
             default_timespan=self.config.default_timespan,
             grafana_org_id=self.config.grafana_org_id,
             default_tz=new_timezone,
-            config_file=self.config.config_file,
         )
         self.config = new_config
 

@@ -45,6 +45,12 @@ class Command(BaseCommand):
                                 response=variable.get("response", ""),
                                 filter=variable.get("filter", {}),
                             )
+                    print(
+                        colored(
+                            text=f"Created dashboard `{dashboard['dashboard_slug']}` with {len(dashboard.get('panels', []))} panels.",
+                            color="green",
+                        )
+                    )
 
         except FileNotFoundError as exc:
             print(colored(text=exc, color="red"))

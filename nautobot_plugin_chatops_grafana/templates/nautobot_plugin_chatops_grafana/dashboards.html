@@ -1,5 +1,5 @@
 {# templates/nautobot_plugin_chatops_grafana/dashboards.html #}
-{% extends 'base.html' %}
+{% extends 'generic/object_list.html' %}
 
 {% block content %}
 {% with config=settings.PLUGINS_CONFIG.nautobot_plugin_chatops_grafana %}
@@ -10,7 +10,7 @@
     </div>
     <div class="col-sm-5">
         <div class="pull-right noprint">
-            <a href="/plugins/nautobot-plugin-chatops-grafana/dashboards/add/" class="btn btn-primary" title="Create a new dashboard">
+            <a href="{% url 'plugins:nautobot_plugin_chatops_grafana:dashboards_create' %}" class="btn btn-primary" title="Create a new dashboard">
                 <span class="mdi mdi-plus-thick" aria-hidden="true"></span> Add
             </a>
             <a  href="{% url 'plugins:nautobot_plugin_chatops_grafana:dashboards_sync' %}"
@@ -28,31 +28,4 @@
     </div>
 </div>
 {% endwith %}
-{% endblock %}
-
-{% block javascript %}
-<script type="text/javascript">
-    $(document).ready(function() {
-        $("#dashboard-import").click(function() {
-            $("img#refresh-loader").show();
-
-            $.ajax({
-                url: "{% url 'plugins-api:nautobot_plugin_chatops_grafana-api:grafana_dashboards' %}",
-                method: "PUT",
-                headers: { "X-CSRFToken": "{{ csrf_token }}" },
-                dataType: "json",
-                context: this,
-                success: function(data) {
-                    $("img#refresh-loader").hide();
-                    alert("Dashboard Sync Complete!");
-                    location.reload();
-                },
-                error: function(data) {
-                    $("img#refresh-loader").hide();
-                    alert("Error " + data.status);
-                }
-            });
-        });
-    });
-</script>
 {% endblock %}

@@ -247,14 +247,12 @@ class GrafanaPanel(DiffSync):
             command = format_command(title)
             existing = self.dict()
             if existing.get("panel"):
-                if command not in existing["panel"].keys():
-                    continue
-
-                if panel_iterator.get(command):
-                    command = f"{command}-{panel_iterator.get(command)+1}"
-                else:
-                    command = f"{command}-1"
-                    panel_iterator[command] = 1
+                if command in existing["panel"].keys():
+                    if panel_iterator.get(command):
+                        command = f"{command}-{panel_iterator.get(command)+1}"
+                    else:
+                        command = f"{command}-1"
+                        panel_iterator[command] = 1
 
             # Create a record for this item
             self.add(
