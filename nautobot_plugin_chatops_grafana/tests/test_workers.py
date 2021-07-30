@@ -31,6 +31,7 @@ class TestGrafana(TestCase):
                 command_name=f"test-command-{i}",
                 friendly_name=f"Test Command {i}",
                 panel_id=i,
+                active=True,
             )
 
     def test_parse_command_string(self):

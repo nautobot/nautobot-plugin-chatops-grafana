@@ -16,11 +16,11 @@ from nautobot.core.views.generic import (
     BulkEditView,
 )
 from nautobot.utilities.forms import ConfirmationForm
-from nautobot_plugin_chatops_grafana.diffsync.sync import run_dashboard_sync, run_panels_sync
+from nautobot_plugin_chatops_grafana.diffsync.sync import run_dashboard_sync, run_panels_sync, run_variables_sync
 from nautobot_plugin_chatops_grafana.tables import PanelViewTable, DashboardViewTable, PanelVariableViewTable
 from nautobot_plugin_chatops_grafana.models import Panel, Dashboard, PanelVariable
 from nautobot_plugin_chatops_grafana.grafana import handler
-from nautobot_plugin_chatops_grafana.filters import DashboardFilter, PanelFilter, VariablFilter
+from nautobot_plugin_chatops_grafana.filters import DashboardFilter, PanelFilter, VariableFilter
 from nautobot_plugin_chatops_grafana.forms import (
     DashboardsForm,
     DashboardsFilterForm,
@@ -32,6 +32,7 @@ from nautobot_plugin_chatops_grafana.forms import (
     PanelsFilterForm,
     PanelsBulkEditForm,
     PanelVariablesForm,
+    PanelVariablesSyncForm,
     PanelVariablesFilterForm,
     PanelVariablesBulkEditForm,
     PanelVariablesCSVForm,
@@ -64,7 +65,6 @@ class DashboardsCreate(PermissionRequiredMixin, ObjectEditView):
     model = Dashboard
     queryset = Dashboard.objects.all()
     model_form = DashboardsForm
-    template_name = "nautobot_plugin_chatops_grafana/dashboards_edit.html"
     default_return_url = "plugins:nautobot_plugin_chatops_grafana:dashboards"
 
 
@@ -180,7 +180,6 @@ class PanelsCreate(PermissionRequiredMixin, ObjectEditView):
     model = Panel
     queryset = Panel.objects.all()
     model_form = PanelsForm
-    template_name = "nautobot_plugin_chatops_grafana/panels_edit.html"
     default_return_url = "plugins:nautobot_plugin_chatops_grafana:panel"
 
 
@@ -275,10 +274,11 @@ class Variables(ObjectListView):
     """View for showing panel-variables configuration."""
 
     queryset = PanelVariable.objects.all()
-    filterset = VariablFilter
+    filterset = VariableFilter
     filterset_form = PanelVariablesFilterForm
     table = PanelVariableViewTable
     action_buttons = ("add", "import")
+    template_name = "nautobot_plugin_chatops_grafana/variable_list.html"
 
     def get_required_permission(self):
         """Return required view permission."""
@@ -292,7 +292,6 @@ class VariablesCreate(PermissionRequiredMixin, ObjectEditView):
     model = PanelVariable
     queryset = PanelVariable.objects.all()
     model_form = PanelVariablesForm
-    template_name = "nautobot_plugin_chatops_grafana/variables_edit.html"
     default_return_url = "plugins:nautobot_plugin_chatops_grafana:panelvariables"
 
 
@@ -344,3 +343,35 @@ class VariablesBulkEditView(BulkEditView):
     def get_required_permission(self):
         """Return required change permission."""
         return "nautobot_plugin_chatops_grafana.panelvariable_edit"
+
+
+class VariablesSync(PermissionRequiredMixin, ObjectEditView):
+    """View for synchronizing data between the Grafana Dashboard Variables and Nautobot."""
+
+    permission_required = "nautobot_plugin_chatops_grafana.panelvariable_sync"
+    model = PanelVariable
+    queryset = PanelVariable.objects.all()
+    model_form = PanelVariablesSyncForm
+    template_name = "nautobot_plugin_chatops_grafana/variables_sync.html"
+    default_return_url = "plugins:nautobot_plugin_chatops_grafana:panelvariables"
+
+    def get_permission_required(self):
+        """Permissions over-ride for the Panels Sync view."""
+        return "nautobot_plugin_chatops_grafana.panelvariable_sync"
+
+    def post(self, request, *args, **kwargs):
+        """Post request for the Panels Sync view."""
+        dashboard_pk = request.POST.get("dashboard")
+        if not dashboard_pk:
+            messages.error(request, "Unable to determine Grafana Dashboard!")
+            return redirect(reverse("plugins:nautobot_plugin_chatops_grafana:panelvariables"))
+
+        dashboard = Dashboard.objects.get(pk=dashboard_pk)
+
+        sync_data = run_variables_sync(dashboard, request.POST.get("delete") == "true")
+        if not sync_data:
+            messages.info(request, "No diffs found for the Grafana Dashboard Variables!")
+        else:
+            messages.success(request, "Grafana Dashboard Variable synchronization complete!")
+
+        return redirect(reverse("plugins:nautobot_plugin_chatops_grafana:panelvariables"))

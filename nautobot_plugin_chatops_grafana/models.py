@@ -57,8 +57,9 @@ class Panel(OrganizationalModel):
     command_name = models.CharField(max_length=64, blank=False)
     friendly_name = models.CharField(max_length=64, default="", blank=False)
     panel_id = models.IntegerField(blank=False)
+    active = models.BooleanField(default=False)
 
-    csv_headers = ["dashboard", "command_name", "friendly_name", "panel_id"]
+    csv_headers = ["dashboard", "command_name", "friendly_name", "panel_id", "active"]
 
     class Meta:
         """Metadata for the model."""
@@ -71,7 +72,7 @@ class Panel(OrganizationalModel):
 
     def to_csv(self):
         """Return fields for bulk view."""
-        return self.dashboard, self.command_name, self.friendly_name, self.panel_id
+        return self.dashboard, self.command_name, self.friendly_name, self.panel_id, self.active
 
 
 @extras_features(
@@ -87,14 +88,15 @@ class PanelVariable(OrganizationalModel):
 
     panel = models.ForeignKey(Panel, on_delete=models.CASCADE)
     name = models.CharField(max_length=32, blank=False)
-    friendly_name = models.CharField(max_length=64, default="")
-    query = models.CharField(max_length=64, default="")
+    friendly_name = models.CharField(max_length=64)
+    query = models.CharField(max_length=64)
     includeincmd = models.BooleanField(default=False)
     includeinurl = models.BooleanField(default=True)
-    modelattr = models.CharField(max_length=64, default="")
-    value = models.CharField(max_length=64, default="")
+    modelattr = models.CharField(max_length=64)
+    value = models.TextField(max_length=64)
     response = models.CharField(max_length=255)
     filter = models.JSONField(blank=True, default=dict, encoder=DjangoJSONEncoder)
+    positional_order = models.IntegerField(default=100)
 
     csv_headers = [
         "panel",
@@ -106,6 +108,7 @@ class PanelVariable(OrganizationalModel):
         "modelattr",
         "value",
         "response",
+        "positional_order",
         "filter",
     ]
 
@@ -131,4 +134,5 @@ class PanelVariable(OrganizationalModel):
             self.value,
             self.response,
             self.filter,
+            self.positional_order,
         )

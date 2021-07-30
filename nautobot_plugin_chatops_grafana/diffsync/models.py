@@ -1,12 +1,12 @@
 """DiffSync model definitions for Grafana Dashboards."""
 from typing import Optional, List
 from diffsync import DiffSync, DiffSyncModel
-from nautobot_plugin_chatops_grafana.models import Dashboard, Panel
+from nautobot_plugin_chatops_grafana.models import Dashboard, Panel, PanelVariable
 from nautobot_plugin_chatops_grafana.helpers import format_command
 
 
 class DashboardModel(DiffSyncModel):
-    """DashboardModel class used to model the stores response into a consumable format."""
+    """DashboardModel class used to model the response into a consumable format."""
 
     _modelname = "dashboard"
     _identifiers = ("slug",)
@@ -58,10 +58,6 @@ class DashboardModel(DiffSyncModel):
     def delete(self) -> Optional[DiffSyncModel]:
         """Delete elements no longer needed on the object.
 
-        NOTE: We are not handling deletes at this time due to the soft requirement of regions
-        being referenced for automation purposes. If we need to track Regions from an external
-        SoT outside of the stores API, then we can start handling it here.
-
         Returns:
             Optional[DiffSyncModel]: Updated model.
         """
@@ -101,7 +97,7 @@ class GrafanaDashboard(DiffSync):
     _required_fields = ("uid", "uri")
 
     def __init__(self, dashboards: List[dict], *args, **kwargs):
-        """Initialize the Enterprise API stores DiffSync model and populate the object."""
+        """Initialize the DiffSync model and populate the object."""
         super().__init__(*args, **kwargs)
 
         for dashboard in dashboards:
@@ -120,7 +116,7 @@ class GrafanaDashboard(DiffSync):
 
 
 class PanelModel(DiffSyncModel):
-    """PanelModel class used to model the stores response into a consumable format."""
+    """PanelModel class used to model the response into a consumable format."""
 
     _modelname = "panel"
     _identifiers = ("command_name",)
@@ -153,6 +149,7 @@ class PanelModel(DiffSyncModel):
             command_name=ids["command_name"],
             panel_id=attrs["panel_id"],
             friendly_name=attrs["friendly_name"],
+            active=False,
         )
         return item
 
@@ -174,10 +171,6 @@ class PanelModel(DiffSyncModel):
 
     def delete(self) -> Optional[DiffSyncModel]:
         """Delete elements no longer needed on the object.
-
-        NOTE: We are not handling deletes at this time due to the soft requirement of regions
-        being referenced for automation purposes. If we need to track Regions from an external
-        SoT outside of the stores API, then we can start handling it here.
 
         Returns:
             Optional[DiffSyncModel]: Updated model.
@@ -221,7 +214,7 @@ class GrafanaPanel(DiffSync):
     _required_fields = ("id",)
 
     def __init__(self, panels: List[dict], dashboard: Dashboard, *args, **kwargs):
-        """Initialize the Enterprise API stores DiffSync model and populate the object."""
+        """Initialize the DiffSync model and populate the object."""
         super().__init__(*args, **kwargs)
 
         panel_iterator = {}
@@ -263,3 +256,128 @@ class GrafanaPanel(DiffSync):
                     friendly_name=title,
                 )
             )
+
+
+class VariableModel(DiffSyncModel):
+    """VariableModel class used to model the response into a consumable format."""
+
+    _modelname = "variable"
+    _identifiers = ("name", "panel")
+    _attributes = (
+        "includeincmd",
+        "includeinurl",
+        "response",
+        "friendly_name",
+    )
+
+    name: str
+    panel: Panel
+    includeincmd: bool
+    includeinurl: bool
+    response: str
+    friendly_name: Optional[str]
+
+    @classmethod
+    def create(cls, diffsync: DiffSync, ids: dict, attrs: dict) -> Optional[DiffSyncModel]:
+        """Handler to create an object if it does not exist as per the diff.
+
+        Args:
+            diffsync (DiffSync): DiffSync
+            ids (dict): Identifiers in the DiffSync model
+            attrs (dict): Additional attributes in the DiffSync model
+
+        Returns:
+            Optional[DiffSyncModel]: [description]
+        """
+        item = super().create(ids=ids, diffsync=diffsync, attrs=attrs)
+        PanelVariable.objects.create(
+            panel=ids["panel"],
+            name=ids["name"],
+            includeincmd=attrs["includeincmd"],
+            includeinurl=attrs["includeinurl"],
+            response=attrs["response"],
+            friendly_name=attrs["friendly_name"],
+            positional_order=100,
+        )
+        return item
+
+    def update(self, attrs: dict) -> Optional[DiffSyncModel]:
+        """Update will handle updating elements we care about in the attrs on the object.
+
+        Args:
+            attrs (dict): attributes that require an update in nautobot_plugin_chatops_grafana.PanelVariable
+
+        Returns:
+            Optional[DiffSyncModel]: Updated model.
+        """
+        variable_object = PanelVariable.objects.get(name=self.name, panel=self.panel)
+
+        for key, value in attrs.items():
+            setattr(variable_object, key, value)
+        variable_object.save()
+        return super().update(attrs)
+
+    def delete(self) -> Optional[DiffSyncModel]:
+        """Delete elements no longer needed on the object.
+
+        Returns:
+            Optional[DiffSyncModel]: Updated model.
+        """
+        PanelVariable.objects.get(name=self.name, panel=self.panel).delete()
+
+        super().delete()
+        return self
+
+
+class NautobotVariable(DiffSync):
+    """NautobotVariable class used to represent the model for nautobot_plugin_chatops_grafana.models.PanelVariable."""
+
+    variable = VariableModel
+
+    top_level = ["variable"]
+
+    def __init__(self, variables: List[PanelVariable], *args, **kwargs):
+        """Initialize the DiffSync model and populate the panel."""
+        super().__init__(*args, **kwargs)
+
+        for variable in variables:
+            # Create a panel record for this item
+            self.add(
+                self.variable(
+                    panel=variable.panel,
+                    name=variable.name,
+                    includeincmd=variable.includeincmd,
+                    includeinurl=variable.includeinurl,
+                    response=variable.response,
+                    friendly_name=variable.friendly_name,
+                )
+            )
+
+
+class GrafanaVariable(DiffSync):
+    """GrafanaVariable class used to represent the data model from the Grafana API."""
+
+    variable = VariableModel
+
+    top_level = ["variable"]
+
+    _required_fields = ("id",)
+
+    def __init__(self, variables: List[dict], dashboard: Dashboard, *args, **kwargs):
+        """Initialize the DiffSync model and populate the object."""
+        super().__init__(*args, **kwargs)
+
+        for panel in Panel.objects.filter(dashboard=dashboard):
+            # Add this variable for each panel in the dashboard.
+            for var_item in variables:
+                # Create a record for this item
+                self.add(
+                    self.variable(
+                        panel=panel,
+                        name=var_item["name"],
+                        includeincmd=var_item["includeincmd"],
+                        includeinurl=var_item["includeinurl"],
+                        response=var_item["response"],
+                        friendly_name=var_item["friendly_name"],
+                    )
+                )

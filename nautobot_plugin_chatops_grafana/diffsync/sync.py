@@ -2,12 +2,14 @@
 from typing import Union
 from diffsync import DiffSyncFlags
 from nautobot_plugin_chatops_grafana.grafana import handler
-from nautobot_plugin_chatops_grafana.models import Dashboard, Panel
+from nautobot_plugin_chatops_grafana.models import Dashboard, Panel, PanelVariable
 from nautobot_plugin_chatops_grafana.diffsync.models import (
     NautobotDashboard,
     GrafanaDashboard,
     NautobotPanel,
     GrafanaPanel,
+    NautobotVariable,
+    GrafanaVariable,
 )
 
 
@@ -60,6 +62,38 @@ def run_panels_sync(dashboard: Dashboard, overwrite: bool = False) -> Union[str,
 
     # Load the Panel objects retrieved from the Nautobot ORM into the DiffSync model.
     diff_grafana = GrafanaPanel(grafana_panels, dashboard)
+
+    diff_result = diff_nautobot.diff_from(diff_grafana, flags=df_flags)
+
+    if not diff_result.has_diffs():
+        return None
+
+    diff_nautobot.sync_from(diff_grafana, flags=df_flags)
+    return diff_result.str()
+
+
+def run_variables_sync(dashboard: Dashboard, overwrite: bool = False) -> Union[str, None]:
+    """run_variables_sync will run a diffsync between Grafana and Nautobot data, then sync if there are inconsistencies.
+
+    Args:
+        dashboard (nautobot_plugin_chatops_grafana.models.Dashboard): The dashboard we are going to do a diffsync with.
+        overwrite (bool): Overwrite Nautobot data and delete records that are no longer in Grafana.
+    """
+    df_flags = DiffSyncFlags.NONE if overwrite else DiffSyncFlags.SKIP_UNMATCHED_DST
+
+    # Fetch panels from the Grafana API
+    grafana_variables = handler.get_variables(dashboard_uid=dashboard.dashboard_uid)
+
+    # Fetch panels from the Nautobot ORM
+    nautobot_variables = []
+    for panel in Panel.objects.filter(dashboard=dashboard):
+        nautobot_variables.extend(PanelVariable.objects.filter(panel=panel))
+
+    # Load the panels info retrieved from the API into the DiffSync model.
+    diff_nautobot = NautobotVariable(nautobot_variables)
+
+    # Load the Panel objects retrieved from the Nautobot ORM into the DiffSync model.
+    diff_grafana = GrafanaVariable(grafana_variables, dashboard)
 
     diff_result = diff_nautobot.diff_from(diff_grafana, flags=df_flags)
 

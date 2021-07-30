@@ -80,13 +80,14 @@ class PanelsForm(BootstrapMixin, ModelForm):
     command_name = CharField(max_length=64)
     friendly_name = CharField(max_length=64)
     panel_id = IntegerField()
+    active = BooleanField()
 
     class Meta:
         """Metaclass attributes of Panel."""
 
         model = Panel
 
-        fields = ("dashboard", "command_name", "friendly_name", "panel_id")
+        fields = ("dashboard", "command_name", "friendly_name", "panel_id", "active")
 
 
 class PanelsSyncForm(BootstrapMixin, ModelForm):
@@ -110,13 +111,14 @@ class PanelsFilterForm(BootstrapMixin, ModelForm):
     command_name = CharField(required=False, label="Command Name")
     friendly_name = CharField(required=False, label="Friendly Name")
     panel_id = IntegerField(required=False, label="Panel ID")
+    active = BooleanField(required=False)
 
     class Meta:
         """Meta attributes."""
 
         model = Panel
 
-        fields = ("q", "dashboard", "command_name", "friendly_name", "panel_id")
+        fields = ("q", "dashboard", "command_name", "friendly_name", "panel_id", "active")
 
         widgets = {}
 
@@ -141,6 +143,7 @@ class PanelsBulkEditForm(BootstrapMixin, BulkEditForm):
 
     pk = ModelMultipleChoiceField(queryset=Panel.objects.all(), widget=MultipleHiddenInput)
     friendly_name = CharField(max_length=255, required=False)
+    active = BooleanField(required=False)
 
     class Meta:
         """Meta attributes."""
@@ -157,12 +160,13 @@ class PanelVariablesForm(BootstrapMixin, ModelForm):
     name = CharField(max_length=32)
     friendly_name = CharField(max_length=64, required=False)
     query = CharField(max_length=64, required=False)
-    includeincmd = BooleanField()
-    includeinurl = BooleanField()
+    includeincmd = BooleanField(required=False)
+    includeinurl = BooleanField(required=False)
     modelattr = CharField(max_length=64, required=False)
     value = CharField(max_length=64, required=False)
     response = CharField(max_length=255, required=False)
     filter = JSONField(required=False)
+    positional_order = IntegerField(required=False)
 
     class Meta:
         """Metaclass attributes of PanelVariable Variable."""
@@ -188,6 +192,7 @@ class PanelVariablesFilterForm(BootstrapMixin, ModelForm):
     modelattr = CharField(max_length=64, required=False)
     value = CharField(max_length=64, required=False)
     response = CharField(max_length=255, required=False)
+    positional_order = IntegerField(required=False)
 
     class Meta:
         """Meta attributes."""
@@ -214,6 +219,7 @@ class PanelVariablesCSVForm(CustomFieldModelCSVForm):
     value = CharField(max_length=64, required=False, label="Jinja2 object reference value. (i.e. '{{ device.name }}')")
     response = CharField(max_length=255, required=False)
     filter = JSONField(required=False)
+    positional_order = IntegerField(required=False)
 
     class Meta:
         """Meta attributes."""
@@ -226,15 +232,15 @@ class PanelVariablesBulkEditForm(BootstrapMixin, BulkEditForm):
     """PanelVariables bulk edit form."""
 
     pk = ModelMultipleChoiceField(queryset=PanelVariable.objects.all(), widget=MultipleHiddenInput)
-    name = CharField(max_length=32)
     friendly_name = CharField(max_length=64, required=False)
     query = CharField(max_length=64, required=False)
-    includeincmd = BooleanField()
-    includeinurl = BooleanField()
+    includeincmd = BooleanField(required=False)
+    includeinurl = BooleanField(required=False)
     modelattr = CharField(max_length=64, required=False)
     value = CharField(max_length=64, required=False)
     response = CharField(max_length=255, required=False)
     filter = JSONField(encoder=DjangoJSONEncoder, required=False)
+    positional_order = IntegerField(required=False)
 
     class Meta:
         """Meta attributes."""
@@ -242,3 +248,16 @@ class PanelVariablesBulkEditForm(BootstrapMixin, BulkEditForm):
         nullable_fields = [
             "friendly_name",
         ]
+
+
+class PanelVariablesSyncForm(BootstrapMixin, ModelForm):
+    """Form for editing Panel Variable instances."""
+
+    dashboard = ModelChoiceField(queryset=Dashboard.objects.all())
+
+    class Meta:
+        """Metaclass attributes of Panel."""
+
+        model = Panel
+
+        fields = ("dashboard",)

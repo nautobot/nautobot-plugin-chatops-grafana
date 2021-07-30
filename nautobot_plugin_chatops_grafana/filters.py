@@ -44,16 +44,17 @@ class PanelFilter(FilterSet):
         """Perform the filtered search."""
         if not value.strip():
             return queryset
+
         qs_filter = (
             Q(dashboard__dashboard_slug__icontains=value)
             | Q(command_name__icontains=value)
             | Q(friendly_name__icontains=value)
-            | Q(panel_id__icontains=value)
+            | Q(panel_id__icontains=value) & Q(action=value)
         )
         return queryset.filter(qs_filter)
 
 
-class VariablFilter(FilterSet):
+class VariableFilter(FilterSet):
     """Filter for PanelVariables."""
 
     q = CharFilter(method="search", label="Search")
@@ -63,7 +64,7 @@ class VariablFilter(FilterSet):
 
         model = PanelVariable
 
-        fields = ("name", "friendly_name", "query", "modelattr", "value", "response")
+        fields = ("panel", "name", "friendly_name", "query", "modelattr", "value", "response")
 
     def search(self, queryset, name, value):  # pylint: disable=unused-argument,no-self-use
         """Perform the filtered search."""
@@ -78,5 +79,6 @@ class VariablFilter(FilterSet):
             | Q(response__icontains=value)
             | Q(includeincmd=value)
             | Q(includeinurl=value)
+            | Q(panel=value)
         )
         return queryset.filter(qs_filter)

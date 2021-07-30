@@ -3,7 +3,7 @@ import tempfile
 import argparse
 import os
 from datetime import datetime
-from typing import NoReturn, List, Union
+from typing import NoReturn, List, Union, Dict
 from isodate import ISO8601Error, parse_duration
 from jinja2 import Template
 from django_rq import job
@@ -11,6 +11,7 @@ from django.core.exceptions import FieldError, ObjectDoesNotExist, MultipleObjec
 from pydantic.error_wrappers import ValidationError  # pylint: disable=no-name-in-module
 from nautobot.dcim import models
 from nautobot.utilities.querysets import RestrictedQuerySet
+from nautobot_chatops.dispatchers import Dispatcher
 from nautobot_chatops.workers import handle_subcommands, add_subcommand
 from nautobot_plugin_chatops_grafana.models import Panel, PanelVariable
 from nautobot_plugin_chatops_grafana.grafana import (
@@ -46,10 +47,10 @@ def initialize_subcommands():
         f"timespan={handler.timespan}",
         f"timezone={handler.timezone}",
     ]
-    for panel in Panel.objects.all():
+    for panel in Panel.objects.filter(active=True):
         panel_variables = []
         # Build parameters list from dynamic variables in panels
-        for variable in PanelVariable.objects.filter(panel=panel):
+        for variable in PanelVariable.objects.filter(panel=panel).order_by("positional_order", "name"):
             if variable.includeincmd:
                 panel_variables.append(variable.name)
         # The subcommand name with be get-{command_name}
@@ -65,7 +66,7 @@ def initialize_subcommands():
         )
 
 
-def chat_get_panel(dispatcher, *args) -> bool:  # pylint: disable=too-many-return-statements
+def chat_get_panel(dispatcher: Dispatcher, *args) -> bool:  # pylint: disable=too-many-return-statements
     """High level function to handle the panel request.
 
     Args:
@@ -84,7 +85,7 @@ def chat_get_panel(dispatcher, *args) -> bool:  # pylint: disable=too-many-retur
         dispatcher.send_error(f"Command {handler.current_subcommand} Multiple Panels Defined!")
         return False
 
-    panel_vars = PanelVariable.objects.filter(panel=panel)
+    panel_vars = PanelVariable.objects.filter(panel=panel).order_by("positional_order", "name")
 
     parsed_args = chat_parse_args(panel_vars, *args)
     if not parsed_args:
@@ -128,7 +129,7 @@ def chat_parse_args(panel_vars: List[PanelVariable], *args) -> Union[dict, bool]
     # Append on the flag command to conform to argparse parsing methods.
     fixed_args = []
     for arg in args:
-        if arg.startswith(handler.default_params):
+        if arg.startswith(tuple(handler.default_params.keys())):
             fixed_args.append(f"--{arg}")
         else:
             fixed_args.append(arg)
@@ -154,7 +155,7 @@ def chat_parse_args(panel_vars: List[PanelVariable], *args) -> Union[dict, bool]
     return parsed_args
 
 
-def chat_return_panel(dispatcher, panel, panel_vars, parsed_args) -> bool:
+def chat_return_panel(dispatcher: Dispatcher, panel: Panel, panel_vars: List[PanelVariable], parsed_args: dict) -> bool:
     """After everything passes the tests decorate the response and return the panel to the user.
 
     Args:
@@ -178,19 +179,13 @@ def chat_return_panel(dispatcher, panel, panel_vars, parsed_args) -> bool:
         dispatcher.send_error("An error occurred while accessing Grafana")
         return False
 
-    chat_header_args = []
-    for variable in panel_vars:
-        if variable.includeincmd:
-            chat_header_args.append(
-                (variable.friendly_name if variable.friendly_name else variable.name, str(parsed_args[variable.name]))
-            )
     dispatcher.send_blocks(
         dispatcher.command_response_header(
-            SLASH_COMMAND,
-            handler.current_subcommand,
-            chat_header_args[:5],
-            panel.friendly_name,
-            grafana_logo(dispatcher),
+            command=SLASH_COMMAND,
+            subcommand=handler.current_subcommand,
+            args=chat_header_args(panel_vars=panel_vars, parsed_args=parsed_args)[:5],
+            description=f"<{handler.panel_url(panel=panel)}|{panel.dashboard.dashboard_slug}:{panel.command_name}> panel",
+            image_element=grafana_logo(dispatcher),
         )
     )
 
@@ -213,7 +208,9 @@ def chat_return_panel(dispatcher, panel, panel_vars, parsed_args) -> bool:
     return True
 
 
-def chat_validate_nautobot_args(dispatcher, panel, panel_vars, parsed_args, action_id) -> NoReturn:
+def chat_validate_nautobot_args(
+    dispatcher: Dispatcher, panel: Panel, panel_vars: List[PanelVariable], parsed_args: dict, action_id: str
+) -> NoReturn:
     """Parse through args and validate them against the definition with the panel.
 
     Args:
@@ -236,6 +233,7 @@ def chat_validate_nautobot_args(dispatcher, panel, panel_vars, parsed_args, acti
         if not variable.query:
             LOGGER.debug("Validated variable %s with input %s", variable.name, parsed_args[variable.name])
             validated_variables[variable.name] = parsed_args[variable.name]
+
         else:
             LOGGER.debug("Validating variable %s with input %s", variable.name, parsed_args[variable.name])
             # A nautobot Query is defined so first lets get all of those objects
@@ -263,7 +261,7 @@ def chat_validate_nautobot_args(dispatcher, panel, panel_vars, parsed_args, acti
 
             # filtered_objects should be a single record by this point. If not, we cannot process further,
             # we need to prompt the user for the options to filter further.
-            if filtered_objects.count() != 1:
+            if filtered_objects.count() != 1 or not parsed_args[variable.name]:
                 if filtered_objects.count() > 1:
                     choices = [
                         (f"{filtered_object.name}", getattr(filtered_object, variable.modelattr))
@@ -337,3 +335,36 @@ def chat_validate_default_args(parsed_args: dict) -> NoReturn:
             setattr(handler, default_arg, parsed_args[default_arg])
         except (ValidationError, ISO8601Error) as exc:
             raise DefaultArgsError(parsed_args[default_arg], exc) from None
+
+
+def chat_header_args(panel_vars: List[PanelVariable], parsed_args: Dict) -> List:
+    """Creates a list of tuples containing the passed in arguments from the chat command.
+
+    Args:
+        panel_vars (list(nautobot_plugin_chatops_grafana.models.PanelVariable)): A list of PanelVariable objects.
+        parsed_args (dict): Dictionary of parsed arguments from argparse.
+
+    Returns:
+        args (List): List of tuples containing the arguments passed into the chat command.
+
+    Examples:
+        >>> print(chat_header_args([PanelVariable(name="test")], {"test": "testing", "timespan": "P12M"}))
+        [("test", "testing"), ("timespan", "timespan=P12M")]
+    """
+    args = []
+    # Check the parsed args to see if they match a panel variable. If so, and the
+    # value isn't the default value, then append it on as a passed in arg.
+    for panel_var in panel_vars:
+        arg = parsed_args.get(panel_var.name)
+        if arg and arg != panel_var.response:
+            args.append((panel_var.name, arg))
+            continue
+
+    # If we didn't find the parsed arg in the panel variable, look in the default variables.
+    # Do the same here, if it does not match the default value, append it on as a passed in arg.
+    for def_param, def_value in handler.default_params.items():
+        arg = parsed_args.get(def_param)
+        if arg and def_value != arg and def_param not in [a[0] for a in args]:
+            args.append((def_param, f"{def_param}={arg}"))
+
+    return args

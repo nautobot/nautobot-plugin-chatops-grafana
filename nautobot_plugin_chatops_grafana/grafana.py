@@ -41,12 +41,18 @@ class GrafanaHandler:
     panels = None
     current_subcommand = ""
     now = datetime.datetime.utcnow()
-    default_params = ("width", "height", "theme", "timespan", "timezone")
 
     def __init__(self, config: dict) -> None:
         """Initialize the class."""
         self.config = GrafanaConfigSettings(**config)
         self.load_panels()
+        self.default_params = {
+            "width": self.config.default_width,
+            "height": self.config.default_height,
+            "theme": self.config.default_theme,
+            "timespan": self.config.default_timespan,
+            "timezone": self.config.default_tz,
+        }
 
     def load_panels(self):
         """This method loads the yaml configuration file, and validates the schema."""
@@ -276,6 +282,76 @@ class GrafanaHandler:
             return []
 
         return data["dashboard"]["panels"]
+
+    def get_variables(self, dashboard_uid: str) -> List[dict]:
+        """get_variables will fetch the active templates for a given dashboard from the grafana API.
+
+        Returns:
+            List[dict]: A list of the grafana variables.
+        """
+        headers = {"Authorization": f"Bearer {self.config.grafana_api_key}"}
+        url = f"{self.config.grafana_url}/api/dashboards/uid/{dashboard_uid}"
+        try:
+            LOGGER.debug("Begin GET /api/dashboards/uid/")
+            results = requests.get(
+                url=url,
+                headers=headers,
+                timeout=REQUEST_TIMEOUT_SEC,
+            )
+        except RequestException as exc:
+            LOGGER.error("An error occurred while accessing the url: %s Exception: %s", url, exc)
+            return []
+
+        if results.status_code != 200:
+            LOGGER.error("Request returned %s for %s", results.status_code, url)
+            return []
+
+        LOGGER.debug("Request returned %s", results.status_code)
+        data = results.json()
+        if not data.get("dashboard"):
+            LOGGER.error("Response does not contain `dashboard` key.")
+            return []
+
+        if not data["dashboard"].get("templating"):
+            LOGGER.error("Response does not contain `dashboard.templating` key.")
+            return []
+
+        if not data["dashboard"]["templating"].get("list"):
+            LOGGER.error("Response does not contain `dashboard.templating.list` key.")
+            return []
+
+        variables = []
+        for variable in data["dashboard"]["templating"]["list"]:
+            variables.append(
+                {
+                    "name": variable["name"],
+                    "response": variable["current"].get("text"),
+                    "includeinurl": True,
+                    "includeincmd": False,
+                    "friendly_name": variable["name"],
+                }
+            )
+
+        return variables
+
+    def panel_url(self, panel: Panel):
+        """Helper method that will build the panel URL for a given request from ChatOps.
+
+        Args:
+            panel (Panel): Grafana Dashboard panel.
+        """
+        payload = {
+            "orgId": self.config.grafana_org_id,
+            "viewPanel": panel.panel_id,
+        }
+        from_time = str(int((self.now - self.config.default_timespan).timestamp() * 1e3))
+        to_time = str(int(self.now.timestamp() * 1e3))
+        if from_time != to_time:
+            payload["from"] = from_time
+            payload["to"] = to_time
+
+        base_url = f"{self.config.grafana_url}/d/{panel.dashboard.dashboard_uid}/{panel.dashboard.dashboard_slug}"
+        return f"{base_url}?{urllib.parse.urlencode(payload)}"
 
 
 handler = GrafanaHandler(PLUGIN_SETTINGS)
