@@ -1,9 +1,9 @@
 ---
 dev_addr: "127.0.0.1:8001"
-edit_uri: "edit/main/nautobot-chatops-extension-grafana/docs"
-site_name: "NautobotChatopsExtensionGrafana Documentation"
-site_url: "https://nautobot-chatops-extension-grafana.readthedocs.io/"
-repo_url: "https://github.com/nautobot/nautobot-chatops-extension-grafana"
+edit_uri: "edit/main/nautobot-plugin-chatops-grafana/docs"
+site_name: "NautobotPluginChatopsGrafana Documentation"
+site_url: "https://nautobot-plugin-chatops-grafana.readthedocs.io/"
+repo_url: "https://github.com/nautobot/nautobot-plugin-chatops-grafana"
 python:
   install:
     - requirements: "docs/requirements.txt"

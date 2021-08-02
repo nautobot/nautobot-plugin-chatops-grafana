@@ -227,7 +227,7 @@ NAPALM_ARGS = {}
 PAGINATE_COUNT = int(os.getenv("NAUTOBOT_PAGINATE_COUNT", 50))
 
 # Enable installed plugins. Add the name of each plugin to the list.
-PLUGINS = ["nautobot_capacity_metrics", "nautobot_chatops", "nautobot_chatops_extension_grafana"]
+PLUGINS = ["nautobot_capacity_metrics", "nautobot_chatops", "nautobot_plugin_chatops_grafana"]
 
 # Plugins configuration settings. These settings are used by various plugins that the user may have installed.
 # Each key in the dictionary is the name of an installed plugin and its value is a dictionary of settings.
@@ -240,7 +240,7 @@ PLUGINS_CONFIG = {
         "mattermost_api_token": os.environ.get("NAUTOBOT_CHATOPS_MATTERMOST_API_TOKEN", ""),
         "mattermost_url": os.environ.get("NAUTOBOT_CHATOPS_MATTERMOST_URL", ""),
     },
-    "nautobot_chatops_extension_grafana": {
+    "nautobot_plugin_chatops_grafana": {
         "grafana_url": os.environ.get("GRAFANA_URL", ""),
         "grafana_api_key": os.environ.get("GRAFANA_API_KEY", ""),
         "default_width": 0,
@@ -249,7 +249,7 @@ PLUGINS_CONFIG = {
         "default_timespan": "0",
         "grafana_org_id": 1,
         "default_tz": "America/Denver",
-        "config_file": "/source/nautobot_chatops_extension_grafana/panels.yml",
+        "config_file": os.environ.get("GRAFANA_PANELS_FILE", "/source/nautobot_plugin_chatops_grafana/panels.yml"),
     },
 }
 
@@ -306,5 +306,5 @@ DEBUG_TOOLBAR_CONFIG = {"SHOW_TOOLBAR_CALLBACK": lambda _request: DEBUG and not 
 
 if "debug_toolbar" not in EXTRA_INSTALLED_APPS:
     EXTRA_INSTALLED_APPS.append("debug_toolbar")
-if "debug_toolbar.middleware.DebugToolbarMiddleware" not in MIDDLEWARE:
-    MIDDLEWARE.insert(0, "debug_toolbar.middleware.DebugToolbarMiddleware")
+if "debug_toolbar.middleware.DebugToolbarMiddleware" not in MIDDLEWARE:  # noqa: F405
+    MIDDLEWARE.insert(0, "debug_toolbar.middleware.DebugToolbarMiddleware")  # noqa: F405

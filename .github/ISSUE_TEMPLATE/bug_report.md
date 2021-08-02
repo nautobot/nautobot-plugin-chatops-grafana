@@ -1,12 +1,12 @@
 ---
 name: 🐛 Bug Report
-about: Report a reproducible bug in the current release of nautobot-chatops-extension-grafana
+about: Report a reproducible bug in the current release of nautobot-plugin-chatops-grafana
 ---
 
 ### Environment
 * Python version:  <!-- Example: 3.7.7 -->
 * Nautobot version:  <!-- Example: 1.0.0 -->
-* nautobot-chatops-extension-grafana version:  <!-- Example: 0.1.0 -->
+* nautobot-plugin-chatops-grafana version:  <!-- Example: 0.1.0 -->
 
 <!-- What did you expect to happen? -->
 ### Expected Behavior
