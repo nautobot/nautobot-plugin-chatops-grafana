@@ -1,6 +1,5 @@
 """Models for Grafana Plugin."""
 from django.db import models
-from django.shortcuts import reverse
 from django.core.serializers.json import DjangoJSONEncoder
 from nautobot.extras.utils import extras_features
 from nautobot.core.models.generics import PrimaryModel, OrganizationalModel
@@ -32,10 +31,6 @@ class Dashboard(PrimaryModel):
     def __str__(self):
         """String value for HTML rendering."""
         return f"{self.dashboard_slug}"
-
-    def get_absolute_url(self):
-        """Returns the Detail view for DeviceLifeCycleEoX models."""
-        return reverse("plugins:nautobot_plugin_chatops_grafana:dashboards", kwargs={"pk": self.pk})
 
     def to_csv(self):
         """Return fields for bulk view."""
