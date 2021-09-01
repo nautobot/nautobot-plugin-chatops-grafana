@@ -6,11 +6,11 @@ base framework to provide all the operational graphs provided by Grafana deliver
 
 ## Documentation
  * [Installation Guide](installation.md)
+ * [Getting Started](getting_started.md)
+ * [Advanced Usage](advanced_usage.md)
  * [FAQ](faq.md)
  * [Contributing](contributing.md)
  * [Code of Conduct](code_of_conduct.md)
- * [Getting Started](getting_started.md)
- * [Advanced Usage](advanced_usage.md)
 
 
 ## Usage
