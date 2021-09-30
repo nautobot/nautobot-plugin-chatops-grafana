@@ -1,7 +1,7 @@
 ---
 dev_addr: "127.0.0.1:8001"
 edit_uri: "edit/main/nautobot-plugin-chatops-grafana/docs"
-site_name: "NautobotPluginChatopsGrafana Documentation"
+site_name: "Nautobot Grafana Plugin Documentation"
 site_url: "https://nautobot-plugin-chatops-grafana.readthedocs.io/"
 repo_url: "https://github.com/nautobot/nautobot-plugin-chatops-grafana"
 python:
@@ -20,4 +20,12 @@ markdown_extensions:
   - toc:
       permalink: true
 nav:
-  - Introduction: "index.md"
+  - Home: "index.md"
+  - Installation Guide: "installation.md"
+  - Getting Started Guide: "getting_started.md"
+  - Advanced Usage Guide: "advanced_usage.md"
+  - FAQ: "faq.md"
+  - Contributing Guide: "contributing.md"
+  - Code of Conduct: "code_of_conduct.md"
+  - Screenshots: "screenshots.md"
+
