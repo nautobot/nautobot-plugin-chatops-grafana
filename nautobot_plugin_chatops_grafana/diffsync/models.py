@@ -313,6 +313,9 @@ class VariableModel(DiffSyncModel):
         variable_object = PanelVariable.objects.get(name=self.name, panel=self.panel)
 
         for key, value in attrs.items():
+            # Skip synchronization of static created attributes during the sync process.
+            if key in ["includeincmd", "includeinurl"]:
+                continue
             setattr(variable_object, key, value)
         variable_object.save()
         return super().update(attrs)
