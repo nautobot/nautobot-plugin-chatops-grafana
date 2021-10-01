@@ -160,12 +160,12 @@ class PanelVariablesForm(BootstrapMixin, ModelForm):
     name = CharField(max_length=32)
     friendly_name = CharField(max_length=64, required=False)
     query = CharField(max_length=64, required=False)
-    includeincmd = BooleanField(required=False)
-    includeinurl = BooleanField(required=False)
     modelattr = CharField(max_length=64, required=False)
     value = CharField(max_length=64, required=False)
     response = CharField(max_length=255, required=False)
     filter = JSONField(required=False)
+    includeincmd = BooleanField(required=False)
+    includeinurl = BooleanField(required=False)
     positional_order = IntegerField(required=False)
 
     class Meta:
@@ -187,11 +187,11 @@ class PanelVariablesFilterForm(BootstrapMixin, ModelForm):
     name = CharField(max_length=32, required=False)
     friendly_name = CharField(max_length=64, required=False)
     query = CharField(max_length=64, required=False)
-    includeincmd = BooleanField(required=False)
-    includeinurl = BooleanField(required=False)
     modelattr = CharField(max_length=64, required=False)
     value = CharField(max_length=64, required=False)
     response = CharField(max_length=255, required=False)
+    includeincmd = BooleanField(required=False)
+    includeinurl = BooleanField(required=False)
     positional_order = IntegerField(required=False)
 
     class Meta:
@@ -213,12 +213,12 @@ class PanelVariablesCSVForm(CustomFieldModelCSVForm):
     name = CharField(max_length=32, required=True, label="Variable Name")
     friendly_name = CharField(max_length=64, required=False, label="Friendly Name")
     query = CharField(max_length=64, required=False, label="Nautobot Query Object (i.e. 'Device')")
-    includeincmd = BooleanField(required=False)
-    includeinurl = BooleanField(required=False)
     modelattr = CharField(max_length=64, required=False, label="Attribute on the query object (i.e. 'name')")
     value = CharField(max_length=64, required=False, label="Jinja2 object reference value. (i.e. '{{ device.name }}')")
     response = CharField(max_length=255, required=False)
     filter = JSONField(required=False)
+    includeincmd = BooleanField(required=False)
+    includeinurl = BooleanField(required=False)
     positional_order = IntegerField(required=False)
 
     class Meta:
@@ -234,12 +234,12 @@ class PanelVariablesBulkEditForm(BootstrapMixin, BulkEditForm):
     pk = ModelMultipleChoiceField(queryset=PanelVariable.objects.all(), widget=MultipleHiddenInput)
     friendly_name = CharField(max_length=64, required=False)
     query = CharField(max_length=64, required=False)
-    includeincmd = BooleanField(required=False)
-    includeinurl = BooleanField(required=False)
     modelattr = CharField(max_length=64, required=False)
     value = CharField(max_length=64, required=False)
     response = CharField(max_length=255, required=False)
     filter = JSONField(encoder=DjangoJSONEncoder, required=False)
+    includeincmd = BooleanField(required=False)
+    includeinurl = BooleanField(required=False)
     positional_order = IntegerField(required=False)
 
     class Meta:
