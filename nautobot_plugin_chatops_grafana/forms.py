@@ -159,7 +159,7 @@ class PanelVariablesForm(BootstrapMixin, ModelForm):
     panel = ModelChoiceField(queryset=Panel.objects.all())
     name = CharField(max_length=32)
     friendly_name = CharField(max_length=64, required=False)
-    query = CharField(max_length=64, required=False)
+    query = CharField(max_length=64, required=False, label="Model")
     modelattr = CharField(max_length=64, required=False)
     value = CharField(max_length=64, required=False)
     response = CharField(max_length=255, required=False)
