@@ -53,6 +53,8 @@ PLUGINS = ["nautobot_plugin_chatops_grafana"]
 # }
 ```
 
+To make it more readable, the above settings example shows info for **only** the Grafana ChatOps Plugin; the [Nautobot Plugin ChatOps](https://github.com/nautobot/nautobot-plugin-chatops/blob/develop/docs/chat_setup/chat_setup.md) will also have configurations in this section.
+
 The plugin behavior can be controlled with the following list of settings
 
  * `grafana_url`:  (REQUIRED)
