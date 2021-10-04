@@ -1,8 +1,11 @@
 """Models for Grafana Plugin."""
 from django.db import models
+from django.core.exceptions import ValidationError
 from django.core.serializers.json import DjangoJSONEncoder
+from django.utils.translation import gettext_lazy as _
 from nautobot.extras.utils import extras_features
 from nautobot.core.models.generics import PrimaryModel, OrganizationalModel
+from nautobot_plugin_chatops_grafana.helpers import VALID_MODELS
 
 
 @extras_features(
@@ -84,7 +87,7 @@ class PanelVariable(OrganizationalModel):
     panel = models.ForeignKey(Panel, on_delete=models.CASCADE)
     name = models.CharField(max_length=32, blank=False)
     friendly_name = models.CharField(max_length=64)
-    query = models.CharField(max_length=64)
+    query = models.CharField(max_length=64, verbose_name="Model")
     includeincmd = models.BooleanField(default=False)
     includeinurl = models.BooleanField(default=True)
     modelattr = models.CharField(max_length=64)
@@ -98,12 +101,12 @@ class PanelVariable(OrganizationalModel):
         "name",
         "friendly_name",
         "query",
-        "includeincmd",
-        "includeinurl",
         "modelattr",
         "value",
         "response",
         "positional_order",
+        "includeincmd",
+        "includeinurl",
         "filter",
     ]
 
@@ -115,6 +118,31 @@ class PanelVariable(OrganizationalModel):
     def __str__(self):
         """String value for HTML rendering."""
         return f"{self.name}"
+
+    def clean(self):
+        """Override clean to do custom validation."""
+        super().clean()
+
+        # Raise error if a query (model) is specified but an associated attribute is not.
+        if self.query and not self.modelattr:
+            raise ValidationError(_("A modelattr must be specified when a query is set!"))
+
+        # Validate that the model name passed in is correct, and that the modelattr is an element
+        # on the model.
+        for nb_model in VALID_MODELS:
+            if hasattr(nb_model, str(self.query)):
+                model = getattr(nb_model, str(self.query))
+                if hasattr(model, str(self.modelattr)):
+                    return
+
+                raise ValidationError(
+                    _(
+                        f"Nautobot model `{self.query}` does not have an attribute of `{self.modelattr}`."
+                        f" {[f.name for f in model._meta.fields if not f.name.startswith('_')]}"
+                    )
+                )
+
+        raise ValidationError(_(f"`{self.query}` is not a valid Nautobot model."))
 
     def to_csv(self):
         """Return fields for bulk view."""

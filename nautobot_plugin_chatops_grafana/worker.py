@@ -9,11 +9,11 @@ from jinja2 import Template
 from django_rq import job
 from django.core.exceptions import FieldError, ObjectDoesNotExist, MultipleObjectsReturned
 from pydantic.error_wrappers import ValidationError  # pylint: disable=no-name-in-module
-from nautobot.dcim import models
 from nautobot.utilities.querysets import RestrictedQuerySet
 from nautobot_chatops.dispatchers import Dispatcher
 from nautobot_chatops.workers import handle_subcommands, add_subcommand
 from nautobot_plugin_chatops_grafana.models import Panel, PanelVariable
+from nautobot_plugin_chatops_grafana.helpers import VALID_MODELS
 from nautobot_plugin_chatops_grafana.grafana import (
     SLASH_COMMAND,
     LOGGER,
@@ -142,7 +142,7 @@ def chat_parse_args(panel_vars: List[PanelVariable], *args) -> Union[dict, bool]
             parser.add_argument(f"{variable.name}", default=variable.response, nargs="?")
         else:
             # The variable from the config wasn't included in the users response (hidden) so
-            # ass the default response if provided in the config
+            # add the default response if provided in the config
             predefined_args[variable.name] = variable.response
 
     parser.add_argument("--width", default=handler.width, nargs="?")
@@ -239,7 +239,7 @@ def chat_validate_nautobot_args(
             # A nautobot Query is defined so first lets get all of those objects
             objects = get_nautobot_objects(variable=variable)
 
-            # Now lets validate the object and prompt the user for a correct object
+            # Copy the filter object from the variable in case a filter has been defined.
             _filter = variable.filter
 
             # If the user specified a filter in the chat command:
@@ -247,11 +247,6 @@ def chat_validate_nautobot_args(
             # we will add it to the filter.
             if parsed_args.get(variable.name):
                 _filter[variable.modelattr] = parsed_args[variable.name]
-
-            # Parse Jinja in filter
-            for filter_key in _filter.keys():
-                template = Template(_filter[filter_key])
-                _filter[filter_key] = template.render(validated_variables)
 
             try:
                 filtered_objects = objects.filter(**_filter)
@@ -282,11 +277,15 @@ def chat_validate_nautobot_args(
             validated_variables[variable.name] = filtered_objects[0].__dict__
 
         # Now we now we have a valid device lets parse the value template for this variable
+        # Where the modelattr refers to the Nautobot model and it's attribute (i.e. Site.name)
+        # The `value` is the value that we will pass to Grafana in variable filtering.
         if variable.value == "":
-            template = Template(str(validated_variables[variable.name]))
+            variable.value = validated_variables.get(variable.name)
         else:
-            template = Template(variable.value)
-        variable.value = template.render(validated_variables)
+            # If there is a variable value, it could be in jinja2 format, so we can take
+            # that format and pass in the validated variables to get the correct rendered template.
+            # If it's not Jinja2, then it should just return the value.
+            variable.value = Template(variable.value).render(validated_variables)
 
 
 def get_nautobot_objects(variable: PanelVariable) -> RestrictedQuerySet:
@@ -301,13 +300,17 @@ def get_nautobot_objects(variable: PanelVariable) -> RestrictedQuerySet:
     Returns:
         RestrictedQuerySet: Objects returned from the Nautobot ORM.
     """
-    try:
-        # Example, if a 'query' defined in panels.yml is set to 'Site', we would pull all sites
-        # using 'Site.objects.all()'
-        objects = getattr(models, variable.query).objects.all()
-    except AttributeError as exc:
-        LOGGER.error("Unable to find class %s in dcim.models: %s", variable.query, exc)
-        raise PanelError(f"I was unable to find class {variable.query} in dcim.models") from None
+    objects = None
+    # Example, if a 'query' defined in panels.yml is set to 'Site', we would pull all sites
+    # using 'Site.objects.all()'
+    for models in VALID_MODELS:
+        if hasattr(models, variable.query):
+            objects = getattr(models, variable.query).objects.all()
+            break
+
+    if not objects:
+        LOGGER.error("Unable to find class %s in nautobot models.", variable.query)
+        raise PanelError(f"I was unable to find class {variable.query} in nautobot models.") from None
 
     if not variable.modelattr:
         raise PanelError("When specifying a query, a modelattr is also required")
