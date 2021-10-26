@@ -1,4 +1,4 @@
-# Nautobot Grafana Plugin 
+# Grafana ChatOps 
 
 The Grafana Chatops plugin is a [Nautobot](https://github.com/nautobot/nautobot) extension used with 
 the [Nautobot ChatOps](https://github.com/nautobot/nautobot-plugin-chatops/)
