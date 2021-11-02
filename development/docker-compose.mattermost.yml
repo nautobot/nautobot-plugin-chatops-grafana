@@ -4,53 +4,53 @@ services:
   mattermost_db:
     image: "postgres:13-alpine"
     volumes:
-      - mm_postgres_data:/var/lib/postgresql/data
-      - /etc/localtime:/etc/localtime:ro
+      - "mm_postgres_data:/var/lib/postgresql/data"
+      - "/etc/localtime:/etc/localtime:ro"
     environment:
-      - POSTGRES_USER=mmuser
-      - POSTGRES_PASSWORD=mmuser_password
-      - POSTGRES_DB=mattermost
+      - "POSTGRES_USER=mmuser"
+      - "POSTGRES_PASSWORD=mmuser_password"
+      - "POSTGRES_DB=mattermost"
 
   app:
-    image: mattermost/mattermost-team-edition:5.31.6
+    image: "mattermost/mattermost-team-edition:5.31.6"
     volumes:
-      - ./mattermost/config:/mattermost/config:rw
+      - "./mattermost/config:/mattermost/config:rw"
       # - ./volumes/app/mattermost/data:/mattermost/data:rw
       # - ./volumes/app/mattermost/logs:/mattermost/logs:rw
       # - ./volumes/app/mattermost/plugins:/mattermost/plugins:rw
       # - ./volumes/app/mattermost/client-plugins:/mattermost/client/plugins:rw
-      - /etc/localtime:/etc/localtime:ro
+      - "/etc/localtime:/etc/localtime:ro"
       # When you want to use SSO with GitLab, you have to add the cert pki chain of GitLab inside Alpine
       # to avoid Token request failed: certificate signed by unknown authority (link: https://github.com/mattermost/mattermost-server/issues/13059)
       # - <path_to_your_gitlab_pki>/pki_chain.pem:/etc/ssl/certs/pki_chain.pem:ro
     environment:
       # set same as db credentials and dbname
-      - MM_USERNAME=mmuser
-      - MM_PASSWORD=mmuser_password
-      - MM_DBNAME=mattermost
+      - "MM_USERNAME=mmuser"
+      - "MM_PASSWORD=mmuser_password"
+      - "MM_DBNAME=mattermost"
 
       # use the credentials you've set above, in the format:
       # MM_SQLSETTINGS_DATASOURCE=postgres://${MM_USERNAME}:${MM_PASSWORD}@mattermost_db:5432/${MM_DBNAME}?sslmode=disable&connect_timeout=10
-      - MM_SQLSETTINGS_DATASOURCE=postgres://mmuser:mmuser_password@mattermost_db:5432/mattermost?sslmode=disable&connect_timeout=10
+      - "MM_SQLSETTINGS_DATASOURCE=postgres://mmuser:mmuser_password@mattermost_db:5432/mattermost?sslmode=disable&connect_timeout=10"
 
       # in case your config is not in default location
-      #- MM_CONFIG=/mattermost/config/config.json
+      # - MM_CONFIG=/mattermost/config/config.json
 
   mattermost_web:
-    image: mattermost/mattermost-prod-web:v5.31.6
+    image: "mattermost/mattermost-prod-web:v5.31.6"
     ports:
       - "8002:80"
       # - "443:8443"
     read_only: true
+    # cap_drop:
+    #   - ALL
     volumes:
       # This directory must have cert files if you want to enable SSL
       # - ./volumes/web/cert:/cert:ro
-      - /etc/localtime:/etc/localtime:ro
-    # cap_drop:
-    #   - ALL
+      - "/etc/localtime:/etc/localtime:ro"
 
 volumes:
-  postgres_data: {} # Nuatobot Postgres
-  mm_postgres_data: {} # Mattermost Postgres
+  postgres_data: {}  # Nuatobot Postgres
+  mm_postgres_data: {}  # Mattermost Postgres
   grafana_data: {}
   prometheus_data: {}
