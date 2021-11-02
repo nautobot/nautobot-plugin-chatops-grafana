@@ -111,6 +111,8 @@ jobs:
           build-args: |
             NAUTOBOT_VER=${{ matrix.nautobot-version }}
             PYTHON_VER=${{ matrix.python-version }}
+      - name: "Copy credentials"
+        run: "cp development/creds.example.env development/creds.env"
       - name: "Build the image"
         run: "poetry run invoke build"
       - name: "Show docker images"
