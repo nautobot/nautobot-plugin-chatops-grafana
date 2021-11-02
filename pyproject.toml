@@ -1,5 +1,5 @@
 [tool.poetry]
-name = "nautobot-plugin-chatops-grafana"
+name = "nautobot-chatops-grafana"
 version = "0.1.0"
 description = "Nautobot Plugin Chatops Grafana"
 authors = ["Network to Code, LLC <opensource@networktocode.com>"]
