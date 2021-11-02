@@ -5,7 +5,7 @@ on:  # yamllint disable-line rule:truthy
   - "pull_request"
 
 env:
-  PLUGIN_NAME: "nautobot-chatops-grafana"
+  PLUGIN_NAME: "nautobot-plugin-chatops-grafana"
 
 jobs:
   # black:
@@ -107,7 +107,7 @@ jobs:
           builder: "${{ steps.buildx.outputs.name }}"
           context: "./"
           push: false
-          tags: "${{ env.PLUGIN_NAME }}:${{ matrix.nautobot-version }}-py${{ matrix.python-version }}"
+          tags: "${{ env.PLUGIN_NAME }}/nautobot:${{ matrix.nautobot-version }}-py${{ matrix.python-version }}"
           file: "./development/Dockerfile"
           cache-from: "type=gha,scope=${{ matrix.nautobot-version }}-py${{ matrix.python-version }}"
           cache-to: "type=gha,scope=${{ matrix.nautobot-version }}-py${{ matrix.python-version }}"
