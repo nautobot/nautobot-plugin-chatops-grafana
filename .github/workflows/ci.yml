@@ -147,6 +147,10 @@ jobs:
             PYTHON_VER=${{ matrix.python-version }}
       - name: "Show docker images"
         run: "docker image ls"
+      - name: "Copy credentials"
+        run: "cp development/creds.example.env development/creds.env"
+      - name: "Linting: pylint"
+        run: "poetry run invoke pylint"
     needs:
       - "build"
 
