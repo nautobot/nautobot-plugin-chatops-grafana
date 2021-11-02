@@ -116,6 +116,8 @@ jobs:
             PYTHON_VER=${{ matrix.python-version }}
       - name: "Debug"
         run: "ls -al /tmp/docker"
+      - name: "Debug"
+        run: "ls -al /tmp/docker/image-${{ matrix.nautobot-version }}-py${{ matrix.python-version }}"
       - name: "Show docker images"
         run: "docker image ls"
       - name: "Load the image"
