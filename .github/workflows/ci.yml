@@ -108,7 +108,7 @@ jobs:
           file: "./development/Dockerfile"
           cache-from: "type=gha,scope=${{ matrix.nautobot-version }}-py${{ matrix.python-version }}"
           cache-to: "type=gha,scope=${{ matrix.nautobot-version }}-py${{ matrix.python-version }}"
-          output: "type=local,dest=/tmp/${{ matrix.nautobot-version }}-py${{ matrix.python-version }}.tar"
+          outputs: "type=local,dest=/tmp/${{ matrix.nautobot-version }}-py${{ matrix.python-version }}.tar"
           build-args: |
             NAUTOBOT_VER=${{ matrix.nautobot-version }}
             PYTHON_VER=${{ matrix.python-version }}
@@ -120,11 +120,11 @@ jobs:
         run: "poetry run invoke build"
       - name: "Show docker images"
         run: "docker image ls"
-    needs:
-      - "bandit"
-      - "pydocstyle"
-      - "flake8"
-      - "yamllint"
+    # needs:
+    #   - "bandit"
+    #   - "pydocstyle"
+    #   - "flake8"
+    #   - "yamllint"
   pylint:
     strategy:
       fail-fast: true
