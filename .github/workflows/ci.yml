@@ -110,14 +110,14 @@ jobs:
           file: "./development/Dockerfile"
           cache-from: "type=gha,scope=${{ matrix.nautobot-version }}-py${{ matrix.python-version }}"
           cache-to: "type=gha,scope=${{ matrix.nautobot-version }}-py${{ matrix.python-version }}"
-          outputs: "type=local,dest=/tmp/docker/image-${{ matrix.nautobot-version }}-py${{ matrix.python-version }}"
+          outputs: "type=image,name=image-${{ matrix.nautobot-version }}-py${{ matrix.python-version }}"
           build-args: |
             NAUTOBOT_VER=${{ matrix.nautobot-version }}
             PYTHON_VER=${{ matrix.python-version }}
-      - name: "Debug"
-        run: "ls -al /tmp/docker"
-      - name: "Debug"
-        run: "ls -al /tmp/docker/image-${{ matrix.nautobot-version }}-py${{ matrix.python-version }}"
+      # - name: "Debug"
+      #   run: "ls -al /tmp/docker"
+      # - name: "Debug"
+      #   run: "ls -al /tmp/docker/image-${{ matrix.nautobot-version }}-py${{ matrix.python-version }}"
       - name: "Show docker images"
         run: "docker image ls"
       - name: "Load the image"
