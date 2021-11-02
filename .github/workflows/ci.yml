@@ -72,7 +72,7 @@ jobs:
     strategy:
       fail-fast: true
       matrix:
-        python-version: ["3.6", "3.7", "3.8", "3.9"]
+        python-version: ["3.7", "3.8", "3.9"]
         nautobot-version: ["1.0.3"]
     runs-on: "ubuntu-20.04"
     env:
@@ -99,6 +99,13 @@ jobs:
           build-args: |
             NAUTOBOT_VER=${{ env.NAUTOBOT_VER }}
             PYTHON_VER=${{ env.PYTHON_VER }}
+      - name: "Show docker images"
+        run: "docker image ls"
+    needs:
+      - "bandit"
+      - "pydocstyle"
+      - "flake8"
+      - "yamllint"
 
 
       # - name: "Create tmp docker dir"
@@ -112,9 +119,7 @@ jobs:
       # - name: "Build Container"
       #   if: "steps.cached-docker-images.outputs.cache-hit != 'true'"
       #   run: "poetry run invoke build"
-      - name: "Show docker images"
-        # if: "steps.cached-docker-images.outputs.cache-hit != 'true'"
-        run: "docker image ls"
+
 
 
   # build:
