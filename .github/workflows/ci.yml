@@ -86,8 +86,6 @@ jobs:
         nautobot-version: ["1.0.3"]
     runs-on: "ubuntu-20.04"
     steps:
-      - name: "print test"
-        run: "echo ${{ matrix.nautobot-version }}-py${{ matrix.python-version }}"
       - name: "Check out repository code"
         uses: "actions/checkout@v2"
       - name: "Setup environment"
@@ -108,8 +106,8 @@ jobs:
           cache-from: "type=gha,scope=${{ matrix.nautobot-version }}-py${{ matrix.python-version }}"
           cache-to: "type=gha,scope=${{ matrix.nautobot-version }}-py${{ matrix.python-version }}"
           build-args: |
-            NAUTOBOT_VER=${{ env.NAUTOBOT_VER }}
-            PYTHON_VER=${{ env.PYTHON_VER }}
+            NAUTOBOT_VER=${{ matrix.nautobot-version }}
+            PYTHON_VER=${{ matrix.python-version }}
       - name: "Show docker images"
         run: "docker image ls"
     needs:
