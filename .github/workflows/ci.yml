@@ -86,6 +86,8 @@ jobs:
         nautobot-version: ["1.0.3"]
     runs-on: "ubuntu-20.04"
     steps:
+      - name: "print test"
+        run: "echo ${{ matrix.nautobot-version }}-py${{ matrix.python-version }}"
       - name: "Check out repository code"
         uses: "actions/checkout@v2"
       - name: "Setup environment"
