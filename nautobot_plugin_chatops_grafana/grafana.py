@@ -160,6 +160,18 @@ class GrafanaHandler:
         )
         self.config = new_config
 
+    @property
+    def headers(self) -> dict:
+        """Helper function to return the required headers for a Grafana requests.
+
+        Returns:
+            (dict): key, value pairs of header values.
+        """
+        headers = {"Accept": "application/json"}
+        if self.config.grafana_api_key:
+            headers["Authorization"] = f"Bearer {self.config.grafana_api_key}"
+        return headers
+
     def get_png(self, panel: Panel, panel_vars: List[PanelVariable]) -> Union[bytes, None]:
         """Using requests GET the generated URL and return the binary contents of the file.
 
@@ -171,10 +183,9 @@ class GrafanaHandler:
             Union[bytes, None]: The raw image from the renderer or None if there was an error.
         """
         url, payload = self.get_png_url(panel, panel_vars)
-        headers = {"Authorization": f"Bearer {self.config.grafana_api_key}"}
         try:
             LOGGER.debug("Begin GET %s", url)
-            results = requests.get(url, headers=headers, stream=True, params=payload, timeout=REQUEST_TIMEOUT_SEC)
+            results = requests.get(url, headers=self.headers, stream=True, params=payload, timeout=REQUEST_TIMEOUT_SEC)
         except RequestException as exc:
             LOGGER.error("An error occurred while accessing the url: %s Exception: %s", url, exc)
             return None
@@ -227,13 +238,12 @@ class GrafanaHandler:
         Returns:
             List[dict]: A list of the grafana dashboards.
         """
-        headers = {"Authorization": f"Bearer {self.config.grafana_api_key}"}
         url = f"{self.config.grafana_url}/api/search"
         try:
             LOGGER.debug("Begin GET /api/search")
             results = requests.get(
                 url=url,
-                headers=headers,
+                headers=self.headers,
                 params={"type": "dash-db"},
                 timeout=REQUEST_TIMEOUT_SEC,
             )
@@ -254,13 +264,12 @@ class GrafanaHandler:
         Returns:
             List[dict]: A list of the grafana panels.
         """
-        headers = {"Authorization": f"Bearer {self.config.grafana_api_key}"}
         url = f"{self.config.grafana_url}/api/dashboards/uid/{dashboard_uid}"
         try:
             LOGGER.debug("Begin GET /api/dashboards/uid/")
             results = requests.get(
                 url=url,
-                headers=headers,
+                headers=self.headers,
                 timeout=REQUEST_TIMEOUT_SEC,
             )
         except RequestException as exc:
@@ -289,13 +298,12 @@ class GrafanaHandler:
         Returns:
             List[dict]: A list of the grafana variables.
         """
-        headers = {"Authorization": f"Bearer {self.config.grafana_api_key}"}
         url = f"{self.config.grafana_url}/api/dashboards/uid/{dashboard_uid}"
         try:
             LOGGER.debug("Begin GET /api/dashboards/uid/")
             results = requests.get(
                 url=url,
-                headers=headers,
+                headers=self.headers,
                 timeout=REQUEST_TIMEOUT_SEC,
             )
         except RequestException as exc:
