@@ -1,6 +1,6 @@
 """Plugin declaration for nautobot_plugin_chatops_grafana."""
 
-__version__ = "0.1.0"
+__version__ = "1.0.0"
 
 from nautobot.extras.plugins import PluginConfig
 
