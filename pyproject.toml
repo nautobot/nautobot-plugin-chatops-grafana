@@ -1,6 +1,6 @@
 [tool.poetry]
 name = "nautobot-chatops-grafana"
-version = "1.0.0"
+version = "1.0.1"
 description = "Nautobot Plugin Chatops Grafana"
 authors = ["Network to Code, LLC <opensource@networktocode.com>"]
 license = "Apache-2.0"
@@ -25,7 +25,7 @@ nautobot = "^1.0.0"
 python = "^3.7"
 nautobot-chatops = "^1.3.1"
 pydantic = "^1.8.2"
-schema-enforcer = "^1.1.0"
+schema-enforcer = "^1.1.1"
 isodate = "^0.6.0"
 diffsync = "^1.3.0"
 
