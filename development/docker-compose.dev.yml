@@ -17,7 +17,7 @@ services:
       - "../:/source"
 
   prometheus:
-    image: "prom/prometheus:v2.27.1"
+    image: "prom/prometheus:v2.32.1"
     command: "--storage.tsdb.retention.time=1d --config.file=/etc/prometheus/prometheus.yml"
     ports:
       - "9090:9090"
@@ -27,7 +27,7 @@ services:
     tty: true
 
   grafana:
-    image: "grafana/grafana:8.0.3"
+    image: "grafana/grafana:8.3.3"
     volumes:
       - "./grafana/provisioning:/etc/grafana/provisioning"
       - "grafana_data:/var/lib/grafana"
@@ -42,7 +42,7 @@ services:
       GF_LOG_FILTERS: "rendering:debug"
 
   renderer:
-    image: "grafana/grafana-image-renderer:3.0.1"
+    image: "grafana/grafana-image-renderer:3.3.0"
     ports:
       - "8081:8081"
     environment:
