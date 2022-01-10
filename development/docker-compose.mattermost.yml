@@ -2,7 +2,7 @@
 version: "3.4"
 services:
   mattermost_db:
-    image: "postgres:13-alpine"
+    image: "postgres:14-alpine"
     volumes:
       - "mm_postgres_data:/var/lib/postgresql/data"
       - "/etc/localtime:/etc/localtime:ro"
@@ -12,7 +12,7 @@ services:
       - "POSTGRES_DB=mattermost"
 
   app:
-    image: "mattermost/mattermost-team-edition:5.31.6"
+    image: "mattermost/mattermost-team-edition:6.2.1"
     volumes:
       - "./mattermost/config:/mattermost/config:rw"
       # - ./volumes/app/mattermost/data:/mattermost/data:rw
@@ -37,7 +37,7 @@ services:
       # - MM_CONFIG=/mattermost/config/config.json
 
   mattermost_web:
-    image: "mattermost/mattermost-prod-web:v5.31.6"
+    image: "mattermost/mattermost-prod-web:v5.33.3"
     ports:
       - "8002:80"
       # - "443:8443"
