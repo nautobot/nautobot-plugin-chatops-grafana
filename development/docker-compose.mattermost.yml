@@ -12,7 +12,7 @@ services:
       - "POSTGRES_DB=mattermost"
 
   app:
-    image: "mattermost/mattermost-team-edition:6.3.3"
+    image: "mattermost/mattermost-team-edition:6.4.0"
     volumes:
       - "./mattermost/config:/mattermost/config:rw"
       # - ./volumes/app/mattermost/data:/mattermost/data:rw
