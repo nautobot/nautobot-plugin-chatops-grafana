@@ -42,7 +42,7 @@ services:
       GF_LOG_FILTERS: "rendering:debug"
 
   renderer:
-    image: "grafana/grafana-image-renderer:3.3.0"
+    image: "grafana/grafana-image-renderer:3.4.0"
     ports:
       - "8081:8081"
     environment:
