@@ -17,7 +17,7 @@ services:
       - "../:/source"
 
   prometheus:
-    image: "prom/prometheus:v2.34.0"
+    image: "prom/prometheus:v2.36.2"
     command: "--storage.tsdb.retention.time=1d --config.file=/etc/prometheus/prometheus.yml"
     ports:
       - "9090:9090"
