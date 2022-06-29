@@ -12,7 +12,7 @@ services:
       - "POSTGRES_DB=mattermost"
 
   app:
-    image: "mattermost/mattermost-team-edition:6.5.0"
+    image: "mattermost/mattermost-team-edition:7.0.1"
     volumes:
       - "./mattermost/config:/mattermost/config:rw"
       # - ./volumes/app/mattermost/data:/mattermost/data:rw
@@ -37,7 +37,7 @@ services:
       # - MM_CONFIG=/mattermost/config/config.json
 
   mattermost_web:
-    image: "mattermost/mattermost-prod-web:v5.33.3"
+    image: "mattermost/mattermost-prod-web:v7.0.1"
     ports:
       - "8002:80"
       # - "443:8443"
