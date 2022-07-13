@@ -1,7 +1,7 @@
 ---
 nautobot_plugin_chatops_grafana:
   project_name: "nautobot-plugin-chatops-grafana"
-  nautobot_ver: "1.0.2"
+  nautobot_ver: "1.2.11"
   local: false
   python_ver: "3.7"
   compose_dir: "development"

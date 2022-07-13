@@ -1214,12 +1214,12 @@ social-auth-app-django = ">=5.0.0,<5.1.0"
 svgwrite = ">=1.4.1,<1.5.0"
 
 [package.extras]
-all = ["django-auth-ldap (>=4.0.0,<4.1.0)", "django-storages (>=1.12.3,<1.13.0)", "mysqlclient (>=2.1.0,<2.2.0)", "napalm (>=3.3.1,<3.4.0)", "social-auth-core[openidconnect,saml] (>=4.2.0,<4.3.0)"]
+all = ["django-auth-ldap (>=4.0.0,<4.1.0)", "django-storages (>=1.12.3,<1.13.0)", "mysqlclient (>=2.1.0,<2.2.0)", "napalm (>=3.3.1,<3.4.0)", "social-auth-core[saml,openidconnect] (>=4.2.0,<4.3.0)"]
 ldap = ["django-auth-ldap (>=4.0.0,<4.1.0)"]
 remote_storage = ["django-storages (>=1.12.3,<1.13.0)"]
 mysql = ["mysqlclient (>=2.1.0,<2.2.0)"]
 napalm = ["napalm (>=3.3.1,<3.4.0)"]
-sso = ["social-auth-core[openidconnect,saml] (>=4.2.0,<4.3.0)"]
+sso = ["social-auth-core[saml,openidconnect] (>=4.2.0,<4.3.0)"]
 
 [[package]]
 name = "nautobot-capacity-metrics"
@@ -2055,7 +2055,7 @@ nautobot = ["nautobot"]
 [metadata]
 lock-version = "1.1"
 python-versions = "^3.7"
-content-hash = "f933a865b106d365c8d8bc8b69b391dcacfca53a7d57955cf8173a4edff8e78c"
+content-hash = "41272af936e69ab7eab00ab2fa0b28be73f84b2c75f17bb6551dd529dba8e0a0"
 
 [metadata.files]
 amqp = [
