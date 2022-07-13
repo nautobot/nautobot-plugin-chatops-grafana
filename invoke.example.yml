@@ -3,7 +3,7 @@ nautobot_plugin_chatops_grafana:
   project_name: "nautobot-plugin-chatops-grafana"
   nautobot_ver: "1.0.2"
   local: false
-  python_ver: "3.6"
+  python_ver: "3.7"
   compose_dir: "development"
   compose_files:
     - "docker-compose.requirements.yml"
