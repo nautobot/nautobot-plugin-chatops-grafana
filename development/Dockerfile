@@ -23,8 +23,9 @@ WORKDIR /source
 COPY poetry.lock pyproject.toml /source/
 # --no-root declares not to install the project package since we're wanting to take advantage of caching dependency installation
 # and the project is copied in and installed after this step
-RUN poetry add nautobot=$NAUTOBOT_VER && \
-    poetry install --no-interaction --no-ansi --no-root
+RUN poetry add nautobot=$NAUTOBOT_VER
+
+RUN poetry install --no-interaction --no-ansi --no-root
 
 # Copy in the rest of the source code and install local Nautobot plugin
 COPY . /source
