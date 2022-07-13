@@ -39,7 +39,7 @@ namespace = Collection("nautobot_plugin_chatops_grafana")
 namespace.configure(
     {
         "nautobot_plugin_chatops_grafana": {
-            "nautobot_ver": "1.0.2",
+            "nautobot_ver": "1.2.11",
             "project_name": "nautobot_plugin_chatops_grafana",
             "python_ver": "3.7",
             "local": False,
